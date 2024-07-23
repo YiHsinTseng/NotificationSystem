@@ -1,17 +1,18 @@
-// const NotificationModel = require('../models/notif');
+const notif = require('../services/notif');
 
-const incrementNotification = (req, res) => {
+const incrementNotification = async (req, res) => {
   try {
     const notificationModel = req.app.get('notificationModel');
     const io = req.app.get('io');
 
-    notificationModel.incrementNotifications();
-    io.emit('notificationUpdate', { count: notificationModel.getNotifications() });
+    await notif.incrementNotifications(notificationModel); // Assume this is async
+    const notifications = notif.getNotifications(notificationModel);
+    io.emit('notificationUpdate', notifications);
 
-    res.json({ count: notificationModel.getNotifications() });
+    res.status(200).send('Notification updated successfully');
   } catch (error) {
-    console.error('處理 POST 請求時發生錯誤:', error);
-    res.status(500).send('內部服務器錯誤');
+    console.error('处理 POST 请求时发生错误:', error.message || error);
+    res.status(500).send('内部服务器错误');
   }
 };
 
