@@ -1,19 +1,22 @@
-// model.js
 class NotificationModel {
   constructor() {
-    this.notifications = 0; // 初始通知數量
+    this.notifications = 0;
   }
 
-  // 獲取通知數量
+  // Get the current notification count
   getNotifications() {
     return this.notifications;
   }
 
-  // 更新通知數量
+  // Increment the notification count
+  incrementNotifications() {
+    this.notifications += 1;
+  }
+
+  // Set the notification count to a specific value
   setNotifications(count) {
     this.notifications = count;
   }
 }
 
-// 輸出通知模型
-export default NotificationModel;
+module.exports = NotificationModel;

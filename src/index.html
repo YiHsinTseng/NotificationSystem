@@ -33,15 +33,23 @@
         <button class="refresh-button" id="refresh-btn">刷新通知</button>
     </div>
 
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script>
-        // 獲取 DOM 元素
         const notificationCountElement = document.getElementById('notification-count');
         const refreshButton = document.getElementById('refresh-btn');
+
+        // 初始化 Socket.IO 連接
+        const socket = io();
 
         // 更新視圖函數
         function updateView(count) {
             notificationCountElement.textContent = count;
         }
+
+        // 監聽伺服器推送的通知更新事件
+        socket.on('notificationUpdate', (data) => {
+            updateView(data.count);
+        });
 
         // 獲取通知數量
         function fetchNotificationCount() {
@@ -51,14 +59,11 @@
                 .catch(error => console.error('獲取通知數量時發生錯誤:', error));
         }
 
-        // 初次加載時獲取通知數量
-        fetchNotificationCount();
-
-        // 設置定時器每 5 秒自動刷新通知數量
-        setInterval(fetchNotificationCount, 5000);
-
         // 綁定刷新按鈕的點擊事件
         refreshButton.addEventListener('click', fetchNotificationCount);
+
+        // 初次加載時獲取通知數量
+        fetchNotificationCount();
     </script>
 </body>
 </html>

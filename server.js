@@ -1,25 +1,39 @@
 const express = require('express');
 const path = require('path');
+
+const http = require('http');
+const socketIo = require('socket.io');
+
 const notifRoute = require('./src/routes/notif');
+const NotificationModel = require('./src/models/notif'); // Import NotificationModel
 
 const app = express();
 const port = 3000;
 
-// 用於解析 JSON 請求體（如果需要）
+const server = http.createServer(app);
+const io = socketIo(server);
+app.set('io', io);
+
+// Create an instance of NotificationModel and set it in the app
+const notificationModel = new NotificationModel();
+app.set('notificationModel', notificationModel);
+
 app.use(express.json());
-
-// 提供靜態文件
 app.use(express.static(path.join(__dirname, 'src')));
-
-// 使用通知路由
 app.use('/notifications', notifRoute);
 
-// 處理 404 錯誤
-app.use((req, res) => {
-  res.status(404).send('頁面未找到');
+io.on('connection', (socket) => {
+  console.log('A new client connected');
+  socket.emit('notificationUpdate', { count: notificationModel.getNotifications() });
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
 });
 
-// 啟動伺服器
-app.listen(port, () => {
-  console.log(`伺服器正在 http://localhost:${port} 運行`);
+app.use((req, res) => {
+  res.status(404).send('Page not found');
+});
+
+server.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
 });
