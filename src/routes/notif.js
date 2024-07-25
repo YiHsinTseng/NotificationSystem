@@ -2,8 +2,9 @@ const express = require('express');
 
 const router = express.Router();
 
-const { incrementNotification } = require('../controllers/notif');
+const controller = require('../controllers/notif');
 
-router.post('/increment', incrementNotification);
+router.get('/', controller.getNotification);
+router.post('/', controller.addNotification);
 
 module.exports = router;
