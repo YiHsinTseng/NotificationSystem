@@ -5,8 +5,10 @@ const http = require('http');
 const socketIo = require('socket.io');
 
 const notifRoute = require('./src/routes/notif');
-const NotificationModel = require('./src/models/notif'); // Import NotificationModel
-const notifService = require('./src/services/notif'); // Import NotificationModel
+// const NotificationModel = require('./src/models/notif'); // Import NotificationModel
+const notifService = require('./src/services/notifSync'); // Import NotificationModel
+const NotificationModel = require('./src/models/notificationSyncModel');
+const MemoryStorage = require('./src/repositories/memoryStorage');
 
 const app = express();
 const port = 3000;
@@ -16,7 +18,10 @@ const io = socketIo(server);
 app.set('io', io);
 
 // Create an instance of NotificationModel and set it in the app
-const notificationModel = new NotificationModel();
+
+const memoryStorage = new MemoryStorage();
+const notificationModel = new NotificationModel(memoryStorage);
+// const notificationModel = new NotificationModel();
 app.set('notificationModel', notificationModel);
 
 app.use(express.json());
@@ -27,6 +32,7 @@ io.on('connection', (socket) => {
   console.log('A new client connected');
   // socket.emit('notificationUpdate', { count: notificationModel.getNotificationsCount() });
   socket.emit('notificationUpdate', notifService.getNotificationsCount(notificationModel));
+  console.log(notifService.getNotificationsCount(notificationModel));
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });

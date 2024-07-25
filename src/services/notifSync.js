@@ -23,10 +23,10 @@ const getNotifications = (notificationModel) => {
   }
 };
 
-const addNotifications = async (notificationModel, message) => {
+const addNotifications = (notificationModel, message) => {
   try {
     // If incrementNotifications involves async operations, await it
-    await notificationModel.addNotification(message);
+    notificationModel.addNotification(message);
   } catch (error) {
     console.error('增加通知時發生錯誤:', error.message || error);
   }

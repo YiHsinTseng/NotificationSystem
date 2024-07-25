@@ -1,4 +1,4 @@
-const notifSerivce = require('../services/notif');
+const notifSerivce = require('../services/notifSync');
 
 const getNotification = async (req, res) => {
   try {
