@@ -1,0 +1,18 @@
+const mongoose = require('mongoose');
+
+const notificationSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  text: { type: String, required: true },
+  // 你可以添加其他字段
+});
+
+notificationSchema.method('toJSON', function () {
+  const obj = this.toObject();
+  delete obj._id;
+  delete obj.__v;
+  return obj;
+});
+
+const Notification = mongoose.model('Notification', notificationSchema);
+
+module.exports = Notification;

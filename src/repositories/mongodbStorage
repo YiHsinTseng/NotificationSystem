@@ -1,0 +1,41 @@
+const Notification = require('../models/notificationMongoose');
+
+class MongoStorage {
+  constructor() {
+    // 在構造函數中設置 Notification 模型
+    this.Notification = Notification;
+  }
+
+  async getNotificationsCount() {
+    try {
+      const count = await this.Notification.countDocuments().exec();
+      return count;
+    } catch (error) {
+      console.error('Error getting notifications count:', error);
+      throw error;
+    }
+  }
+
+  async addNotification(notification) {
+    try {
+      // 假設 notification 對象符合 Mongoose 模型的要求
+      const newNotification = new this.Notification(notification);
+      await newNotification.save();
+    } catch (error) {
+      console.error('Error adding notification:', error);
+      throw error;
+    }
+  }
+
+  async getAllNotifications() {
+    try {
+      const notifications = await this.Notification.find().exec();
+      return notifications.map((note) => note.toJSON());
+    } catch (error) {
+      console.error('Error getting all notifications:', error);
+      throw error;
+    }
+  }
+}
+
+module.exports = MongoStorage;

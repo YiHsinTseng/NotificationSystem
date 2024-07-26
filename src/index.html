@@ -48,6 +48,7 @@
 
         // 監聽伺服器推送的通知更新事件
         socket.on('notificationUpdate', (data) => {
+            console.log('Received notification update:', data);
             updateView(data.count);
         });
 
