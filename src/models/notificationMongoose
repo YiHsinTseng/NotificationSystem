@@ -1,18 +1,21 @@
 const mongoose = require('mongoose');
+const { generateUserId } = require('../utils/generateId');
 
 const notificationSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  id: {
+    type: String, default: generateUserId, required: true, unique: true, alias: 'user_id',
+  },
   text: { type: String, required: true },
-  // 你可以添加其他字段
-});
-
-notificationSchema.method('toJSON', function () {
-  const obj = this.toObject();
-  delete obj._id;
-  delete obj.__v;
-  return obj;
+}, {
+  toJSON: {
+    transform(doc, ret) {
+      const { _id, ...rest } = ret;
+      const newRet = { user_id: _id, ...rest };
+      return newRet;
+    },
+  },
 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 
-module.exports = Notification;
+module.exports = { Notification, notificationSchema };

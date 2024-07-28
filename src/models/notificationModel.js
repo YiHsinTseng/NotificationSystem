@@ -1,4 +1,5 @@
 const Notification = require('./notification');
+const NotificationAync = require('./notificationMongoose').Notification;
 
 class NotificationModel {
   constructor(storage) {
@@ -11,7 +12,7 @@ class NotificationModel {
 
   addNotification(message) {
     const id = Date.now();
-    const notification = new Notification(id, message);
+    const notification = new NotificationAync({ id, text: message });
     this.storage.addNotification(notification);
   }
 
@@ -25,18 +26,18 @@ class NotificationAsyncModel {
     this.storage = storage;
   }
 
-  async getNotificationsCount() {
-    return this.storage.getNotificationsCount();
+  async getNotificationsCount(user_id) {
+    return await this.storage.getNotificationsCount(user_id);
   }
 
-  async addNotification(message) {
+  async addNotification(user_id, message) {
     const id = Date.now();
     const notification = new Notification(id, message);
-    this.storage.addNotification(notification);
+    await this.storage.addNotification(user_id, notification);
   }
 
-  async getAllNotifications() {
-    return this.storage.getAllNotifications();
+  async getAllNotifications(user_id) {
+    return await this.storage.getAllNotifications(user_id);
   }
 }
 

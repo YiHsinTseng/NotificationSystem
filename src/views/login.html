@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入/註冊</title>
+    <style>
+        .form-container { max-width: 300px; margin: auto; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1 id="formTitle">登入</h1>
+    <div class="form-container">
+        <form id="authForm">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br><br>
+            <button type="submit" id="submitButton">登入</button>
+        </form>
+        <button id="toggleButton">切換到註冊</button>
+    </div>
+
+    <script>
+        const authForm = document.getElementById('authForm');
+        const formTitle = document.getElementById('formTitle');
+        const submitButton = document.getElementById('submitButton');
+        const toggleButton = document.getElementById('toggleButton');
+
+        let isLogin = true; // 預設為登入模式
+
+        authForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const endpoint = isLogin ? '/users/login' : '/users/register';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    if (result.token) {
+                        // 存储 JWT 令牌
+                        localStorage.setItem('authToken', result.token);
+                        console.log(result.token)
+                    }
+                    if (result.redirectTo) {
+                        // 直接跳转到指定页面
+                        window.location.href = result.redirectTo;
+                    } else {
+                        alert(result.message);
+                    }
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                alert('发生错误');
+                console.error(error);
+            }
+        });
+
+        toggleButton.addEventListener('click', () => {
+            isLogin = !isLogin;
+            formTitle.textContent = isLogin ? '登入' : '註冊';
+            submitButton.textContent = isLogin ? '登入' : '註冊';
+            toggleButton.textContent = isLogin ? '切換到註冊' : '切換到登入';
+        });
+    </script>
+</body>
+</html>

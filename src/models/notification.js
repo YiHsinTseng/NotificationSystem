@@ -1,5 +1,5 @@
 class Notification {
-  constructor(id, text, sender, receiver) {
+  constructor(id, text) {
     this.id = id; // 唯一標識符
     this.text = text; // 文字內容
     // this.sender = sender; // 寄件者

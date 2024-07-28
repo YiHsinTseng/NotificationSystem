@@ -4,7 +4,7 @@ const StorageInterface = require('./storageInterface');
 class MemoryStorage extends StorageInterface {
   constructor() {
     super();
-    this.notifications = new Map();
+    this.notifications = new Map();// 沒有往上加上user層
     this.notificationsCount = 0;
   }
 

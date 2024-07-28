@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { generateUserId } = require('../utils/generateId');
-// const { UserGroup } = require('./group');
+const UserNotification = require('./userNotificationMongoose');
 const AppError = require('../utils/appError');
 
 const userSchema = new mongoose.Schema({
@@ -87,11 +87,11 @@ userSchema.methods.generateAuthToken = function generateAuthToken() {
 userSchema.methods.createUser = async function createUser() {
   await this.save();
 
-  // const userGroup = new UserGroup({
-  //   _id: this._id,
-  //   groups: [],
-  // });
-  // await userGroup.save();
+  const userNotification = new UserNotification({
+    _id: this._id,
+    notifications: [],
+  });
+  await userNotification.save();
 
   return { success: true, message: 'User signed up successfully.' };
 };
@@ -154,8 +154,8 @@ userSchema.statics.deleteUser = async function deleteUser(user_id) {
     throw new AppError(404, 'User not found');
   }
 
-  // Remove all UserGroup objects that reference this user
-  // await mongoose.model('UserGroup').deleteMany({ _id: user._id });
+  // Remove all UserNotification objects that reference this user
+  await mongoose.model('UserNotification').deleteMany({ _id: user._id });
 
   // Delete the user
   await User.deleteOne({ _id: user_id });

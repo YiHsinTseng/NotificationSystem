@@ -36,7 +36,9 @@ const notificationModel = new NotificationAsyncModel(mongodbStorage);
 app.set('notificationModel', notificationModel);
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'src')));
+
+app.use(express.static(path.join(__dirname, 'src/views')));// 公開瀏覽不受jwt驗證影響，index重導向login
+
 app.use('/', userRoute);
 app.use('/notifications', notifRoute);
 
@@ -50,24 +52,27 @@ app.use('/notifications', notifRoute);
 //   });
 // });
 
+const { authenticateJwtSocket } = require('./src/middlewares/authenticate');
+
+io.use(authenticateJwtSocket);
+
 io.on('connection', async (socket) => {
   console.log('A new client connected');
-  // socket.emit('notificationUpdate', { count: notificationModel.getNotificationsCount() });
 
-  // const count = await notifService.getNotificationsCount(notificationModel);
-  const notification = await notifService.getNotifications(notificationModel);
+  try {
+    const user_id = socket.user; // 確保正確提取用戶 ID
+    // console.log(user_id);
+    const notification = await notifService.getNotifications(notificationModel, user_id);
+    socket.emit('notificationUpdate', notification);
+    console.log(notification.count);
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+  }
 
-  socket.emit('notificationUpdate', notification);
-  // console.log(notification.count);
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
 });
-
-app.use((req, res) => {
-  res.status(404).send('Page not found');
-});
-
 // general error handler
 // app.use(apiErrorHandler);
 

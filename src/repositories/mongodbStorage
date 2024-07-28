@@ -1,36 +1,48 @@
-const Notification = require('../models/notificationMongoose');
+const { Notification } = require('../models/notificationMongoose');
+const UserNotification = require('../models/userNotificationMongoose');
 
 class MongoStorage {
   constructor() {
-    // 在構造函數中設置 Notification 模型
+    this.UserNotification = UserNotification;
     this.Notification = Notification;
   }
 
-  async getNotificationsCount() {
+  async getNotificationsCount(user_id) {
     try {
-      const count = await this.Notification.countDocuments().exec();
-      return count;
+      const userNotification = await this.UserNotification.findById(user_id);
+      // console.log(userNotification);
+      if (!userNotification) {
+        throw new Error('User notifications not found');
+      }
+      return userNotification.notifications.length;
     } catch (error) {
       console.error('Error getting notifications count:', error);
       throw error;
     }
   }
 
-  async addNotification(notification) {
+  async addNotification(user_id, notification) {
     try {
-      // 假設 notification 對象符合 Mongoose 模型的要求
-      const newNotification = new this.Notification(notification);
-      await newNotification.save();
+      const userNotification = await this.UserNotification.findById(user_id);
+      if (!userNotification) {
+        throw new Error('User notifications not found');
+      }
+      userNotification.notifications.push(notification);
+      await userNotification.save();
+      return { success: true, message: 'Notification added successfully' };
     } catch (error) {
       console.error('Error adding notification:', error);
       throw error;
     }
   }
 
-  async getAllNotifications() {
+  async getAllNotifications(user_id) {
     try {
-      const notifications = await this.Notification.find().exec();
-      return notifications.map((note) => note.toJSON());
+      const userNotification = await this.UserNotification.findById(user_id);
+      if (!userNotification) {
+        throw new Error('User notifications not found');
+      }
+      return userNotification.notifications;
     } catch (error) {
       console.error('Error getting all notifications:', error);
       throw error;

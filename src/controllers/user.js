@@ -18,7 +18,9 @@ const register = async (req, res, next) => {
     const token = await newUser.generateAuthToken();
     const result = await newUser.createUser();
     if (result.success) {
-      return res.status(201).json({ status: 'success', message: result.message, token });
+      return res.status(201).json({
+        status: 'success', message: result.message, token, redirectTo: '/index.html',
+      });
     }
     throw new AppError(res, 400, 'Failed to register');
   } catch (error) {
@@ -38,11 +40,14 @@ const login = async (req, res, next) => {
     const isMatch = await foundUser.comparePassword(req.body.password);
     if (isMatch) {
       const token = await foundUser.generateAuthToken();
-      return res.send({
+      // console.log(token);
+      const result = res.json({
         status: 'success',
         message: 'User signed in successfully',
         token,
+        redirectTo: '/index.html', // 添加重定向訊息
       });
+      return result;
     }
 
     throw new AppError(res, 401, 'Incorrect password');

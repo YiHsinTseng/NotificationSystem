@@ -6,7 +6,7 @@ const { authenticateJwt, authenticateAdmin } = require('../middlewares/authentic
 router.post('/users/register', controller.register);
 router.post('/users/login', controller.login);
 
-// JWT authentication middleware
+// // JWT authentication middleware
 router.use(authenticateJwt);
 
 router.get('/users', authenticateAdmin, controller.getAllUsers);
