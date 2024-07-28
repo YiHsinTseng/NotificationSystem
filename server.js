@@ -6,7 +6,10 @@ const socketIo = require('socket.io');
 
 require('./config/dbConnect');
 
+const userRoute = require('./src/routes/user');
 const notifRoute = require('./src/routes/notif');
+
+// 為了自由切換儲存資料庫實作
 // const { NotificationModel } = require('./src/models/notificationModel'); // Import NotificationModel
 // const notifService = require('./src/services/notifSync'); // Import NotificationModel
 // const MemoryStorage = require('./src/repositories/memoryStorage');
@@ -22,6 +25,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 app.set('io', io);
 
+const apiErrorHandler = require('./src/middlewares/apiErrorHandler');
 // Create an instance of NotificationModel and set it in the app
 
 // const memoryStorage = new MemoryStorage();
@@ -33,6 +37,7 @@ app.set('notificationModel', notificationModel);
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'src')));
+app.use('/', userRoute);
 app.use('/notifications', notifRoute);
 
 // io.on('connection', (socket) => {
@@ -53,7 +58,7 @@ io.on('connection', async (socket) => {
   const notification = await notifService.getNotifications(notificationModel);
 
   socket.emit('notificationUpdate', notification);
-  console.log(notification.count);
+  // console.log(notification.count);
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
@@ -62,6 +67,9 @@ io.on('connection', async (socket) => {
 app.use((req, res) => {
   res.status(404).send('Page not found');
 });
+
+// general error handler
+// app.use(apiErrorHandler);
 
 server.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
