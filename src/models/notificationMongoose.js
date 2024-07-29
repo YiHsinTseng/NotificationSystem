@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const { generateUserId } = require('../utils/generateId');
 
 const notificationSchema = new mongoose.Schema({
-  id: {
-    type: String, default: generateUserId, required: true, unique: true, alias: 'user_id',
+  _id: {
+    type: String, default: generateUserId, alias: 'user_id',
   },
   text: { type: String, required: true },
 }, {

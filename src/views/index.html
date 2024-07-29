@@ -57,9 +57,15 @@
                 console.log('Socket.IO connected');
             });
 
-            socket.on('connect_error', (error) => {
-                console.error('Socket.IO connection error:', error);
-            });
+            socket.on('connect_error', (err) => {
+            if (err.message === 'Authentication error') {
+                // 处理认证错误
+                alert('認證錯誤，請重新登錄');
+                window.location.href = '/login.html'; // 重定向到登录页面
+            } else {
+                console.error('Socket.io 連接錯誤:', err);
+            }
+        });
 
             // 監聽伺服器推送的通知更新事件
             socket.on('notificationUpdate', (data) => {
