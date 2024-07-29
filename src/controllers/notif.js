@@ -21,7 +21,7 @@ const addNotification = async (req, res) => {
     const notificationRepository = req.app.get('notificationRepository');
     const io = req.app.get('io');
 
-    const { user_id } = req.user;
+    const { user_id } = req.body;
     const { message } = req.body;
     // console.log(user_id);
 

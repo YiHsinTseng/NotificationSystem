@@ -6,6 +6,8 @@ const notificationSchema = new mongoose.Schema({
     type: String, default: generateUserId, alias: 'user_id',
   },
   text: { type: String, required: true },
+  sender: { type: String, required: true }, // 寄件者
+  receiver: { type: String, required: true }, // 接收者
 }, {
   toJSON: {
     transform(doc, ret) {

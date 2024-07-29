@@ -33,7 +33,9 @@ class NotificationAsyncRepository {
 
   async addNotification(user_id, message) {
     const id = Date.now(); // 也可用uuid
-    const notification = new Notification(id, message);
+    const notification = new NotificationAync({
+      id, text: message, receiver: user_id, sender: 'system',
+    });
     await this.storage.addNotification(user_id, notification);
   }
 
