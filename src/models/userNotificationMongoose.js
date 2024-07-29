@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { generateUserId } = require('../utils/generateId');
-const { notificationSchema } = require('./notificationMongoose');
+const { notificationSchema } = require('./notificationMongoose.js');
 const AppError = require('../utils/appError');
 
 const UserNotificationSchema = new mongoose.Schema({

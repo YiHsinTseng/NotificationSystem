@@ -1,9 +1,9 @@
 // const model = require('../services/notif');
 
-const getNotificationsCount = async (notificationModel, user_id) => {
+const getNotificationsCount = async (notificationRepository, user_id) => {
   try {
     return {
-      count: await notificationModel.getNotificationsCount(user_id),
+      count: await notificationRepository.getNotificationsCount(user_id),
     };
   } catch (error) {
     console.error('獲取通知時發生錯誤:', error.message || error);
@@ -11,11 +11,11 @@ const getNotificationsCount = async (notificationModel, user_id) => {
   }
 };
 
-const getNotifications = async (notificationModel, user_id) => {
+const getNotifications = async (notificationRepository, user_id) => {
   try {
     const notifications = {
-      count: await notificationModel.getNotificationsCount(user_id),
-      details: await notificationModel.getAllNotifications(user_id), // Ensure this method exists
+      count: await notificationRepository.getNotificationsCount(user_id),
+      details: await notificationRepository.getAllNotifications(user_id), // Ensure this method exists
     };
     // console.log(notifications);
     // console.log(1);
@@ -26,10 +26,11 @@ const getNotifications = async (notificationModel, user_id) => {
   }
 };
 
-const addNotifications = async (notificationModel, user_id, message) => {
+const addNotifications = async (notificationRepository, user_id, message) => {
   try {
     // If incrementNotifications involves async operations, await it
-    await notificationModel.addNotification(user_id, message);
+    await notificationRepository.addNotification(user_id, message);
+    // 如果要合併的話會在此 回傳最新的notifications (getNotifications)
   } catch (error) {
     console.error('增加通知時發生錯誤:', error.message || error);
   }

@@ -1,7 +1,7 @@
-const Notification = require('./notification');
-const NotificationAync = require('./notificationMongoose').Notification;
+const Notification = require('../notification.js');
+const NotificationAync = require('../notificationMongoose.js').Notification;
 
-class NotificationModel {
+class NotificationRepository {
   constructor(storage) {
     this.storage = storage;
   }
@@ -21,24 +21,26 @@ class NotificationModel {
   }
 }
 
-class NotificationAsyncModel {
+class NotificationAsyncRepository {
   constructor(storage) {
     this.storage = storage;
   }
 
   async getNotificationsCount(user_id) {
-    return await this.storage.getNotificationsCount(user_id);
+    const count = await this.storage.getNotificationsCount(user_id);
+    return count;
   }
 
   async addNotification(user_id, message) {
-    const id = Date.now();
+    const id = Date.now(); // 也可用uuid
     const notification = new Notification(id, message);
     await this.storage.addNotification(user_id, notification);
   }
 
   async getAllNotifications(user_id) {
-    return await this.storage.getAllNotifications(user_id);
+    const notifications = await this.storage.getAllNotifications(user_id);
+    return notifications;
   }
 }
 
-module.exports = { NotificationModel, NotificationAsyncModel };
+module.exports = { NotificationRepository, NotificationAsyncRepository };

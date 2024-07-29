@@ -1,5 +1,5 @@
-const { Notification } = require('../models/notificationMongoose');
-const UserNotification = require('../models/userNotificationMongoose');
+const { Notification } = require('../notificationMongoose.js');
+const UserNotification = require('../userNotificationMongoose');
 
 class MongoStorage {
   constructor() {

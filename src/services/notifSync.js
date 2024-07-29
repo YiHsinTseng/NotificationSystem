@@ -1,9 +1,9 @@
 // const model = require('../services/notif');
 
-const getNotificationsCount = (notificationModel) => {
+const getNotificationsCount = (notificationRepository) => {
   try {
     return {
-      count: notificationModel.getNotificationsCount(),
+      count: notificationRepository.getNotificationsCount(),
     };
   } catch (error) {
     console.error('獲取通知時發生錯誤:', error.message || error);
@@ -11,11 +11,11 @@ const getNotificationsCount = (notificationModel) => {
   }
 };
 
-const getNotifications = (notificationModel) => {
+const getNotifications = (notificationRepository) => {
   try {
     return {
-      count: notificationModel.getNotificationsCount(),
-      details: notificationModel.getAllNotifications(), // Ensure this method exists
+      count: notificationRepository.getNotificationsCount(),
+      details: notificationRepository.getAllNotifications(), // Ensure this method exists
     };
   } catch (error) {
     console.error('獲取通知時發生錯誤:', error.message || error);
@@ -23,10 +23,10 @@ const getNotifications = (notificationModel) => {
   }
 };
 
-const addNotifications = (notificationModel, message) => {
+const addNotifications = (notificationRepository, message) => {
   try {
     // If incrementNotifications involves async operations, await it
-    notificationModel.addNotification(message);
+    notificationRepository.addNotification(message);
   } catch (error) {
     console.error('增加通知時發生錯誤:', error.message || error);
   }

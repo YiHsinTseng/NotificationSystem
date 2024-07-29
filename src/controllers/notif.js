@@ -3,11 +3,11 @@ const notifSerivce = require('../services/notifAsync');
 
 const getNotification = async (req, res) => {
   try {
-    const notificationModel = req.app.get('notificationModel');
+    const notificationRepository = req.app.get('notificationRepository');
     // const io = req.app.get('io');
     const { user_id } = req.user;
 
-    const notifications = await notifSerivce.getNotifications(notificationModel, user_id);
+    const notifications = await notifSerivce.getNotifications(notificationRepository, user_id);
     // io.emit('notificationUpdate', notifications);
 
     res.status(200).json({ message: 'Notification updated successfully', notifications });
@@ -18,15 +18,15 @@ const getNotification = async (req, res) => {
 };
 const addNotification = async (req, res) => {
   try {
-    const notificationModel = req.app.get('notificationModel');
+    const notificationRepository = req.app.get('notificationRepository');
     const io = req.app.get('io');
 
     const { user_id } = req.user;
     const { message } = req.body;
     // console.log(user_id);
 
-    await notifSerivce.addNotifications(notificationModel, user_id, message); // Assume this is async
-    const notifications = await notifSerivce.getNotifications(notificationModel, user_id);
+    await notifSerivce.addNotifications(notificationRepository, user_id, message); // Assume this is async
+    const notifications = await notifSerivce.getNotifications(notificationRepository, user_id);
     io.emit('notificationUpdate', notifications); // 只要推送{count} 要確保資料格式很熟
 
     // io.emit('notificationUpdate', { count: notifications.count }); // 只要推送{count} 要確保資料格式很熟
