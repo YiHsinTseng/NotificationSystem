@@ -100,7 +100,7 @@
                 function displayNotifications() {
                     notificationListElement.innerHTML = '';
                     const notificationsToDisplay = notifications.slice(0, displayedCount + limit);
-                    console.log(notifications)
+                    // console.log(notifications)
                     notificationsToDisplay.forEach(notification => {
                         const item = document.createElement('div');
                         item.className = 'notification-item' + (notification.isRead ? ' read' : '');
@@ -143,7 +143,14 @@
                 }
 
                 function markAsRead(notificationId) {
-                    console.log(notificationId)
+                    // 查找通知对象
+                    const notification = notifications.find(n => n.notification_id === notificationId);
+
+                    // 如果通知不存在或已读，则不发起 API 请求
+                    if (!notification || notification.isRead) {
+                        return;
+                    }
+
                     fetch(`/notifications/${notificationId}`, {
                         method: 'PATCH',
                         headers: {
@@ -155,12 +162,15 @@
                     .then(response => response.json())
                     .then(data => {
                         console.log('通知已更新:', data);
+                        // 更新本地通知列表中的状态
+                        notification.isRead = true;
                     })
                     .catch(error => console.error('更新通知狀態時發生錯誤:', error));
                 }
 
                 refreshButton.addEventListener('click', () => {
-                    if (notificationListContainer.style.display === 'none') {
+                    console.log('Current display state:', notificationListContainer.style.display);
+                    if (notificationListContainer.style.display === 'none' || notificationListContainer.style.display === '') {
                         notificationListContainer.style.display = 'block';
                         fetchNotifications();
                     } else {

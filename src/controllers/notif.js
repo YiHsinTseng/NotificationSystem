@@ -48,10 +48,10 @@ const patchNotification = async (req, res) => {
     const { isRead } = req.body;
     await notifSerivce.patchNotification(notificationRepository, user_id, notification_id, isRead);
 
-    const notifications = await notifSerivce.getNotifications(notificationRepository, user_id);
+    // const notifications = await notifSerivce.getNotifications(notificationRepository, user_id);
     // io.emit('notificationUpdate', notifications); // 只要推送{count} 要確保資料格式很熟
 
-    res.status(200).json({ message: 'Notification updated successfully', notifications });
+    res.status(200).json({ message: 'Notification Readed successfully' });
   } catch (error) {
     console.error('處理 POST 請求時發生錯誤:', error.message || error);
     res.status(500).send('內部服務器錯誤');
