@@ -11,7 +11,7 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            width: 200px;
+            width: 300px;
             background-color: #f9f9f9;
         }
         .notification-count {
@@ -25,52 +25,125 @@
             font-size: 16px;
             cursor: pointer;
         }
+        .notification-list-container {
+            display: none; /* 初始隱藏 */
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #fff;
+        }
+        .notification-item {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .load-more-button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="notification-container">
         <div class="notification-count" id="notification-count">0</div>
+        <button class="refresh-button" id="refresh-button">查看通知</button>
+        <div class="notification-list-container" id="notification-list-container">
+            <div class="notification-list" id="notification-list"></div>
+            <button class="load-more-button" id="load-more-button">查看更多</button>
+        </div>
     </div>
 
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script>
-        // 檢查是否存在 JWT，若不存在則重新導向至登入頁
         const token = localStorage.getItem('authToken');
         if (!token) {
             window.location.href = '/login.html';
         } else {
             const notificationCountElement = document.getElementById('notification-count');
+            const notificationListElement = document.getElementById('notification-list');
+            const notificationListContainer = document.getElementById('notification-list-container');
+            const refreshButton = document.getElementById('refresh-button');
+            const loadMoreButton = document.getElementById('load-more-button');
 
-            // 初始化 Socket.IO 連接並攜帶 JWT
+            let notifications = [];
+            let displayedCount = 0;
+            const limit = 5; // 每次顯示的數量
+
             const socket = io({
                 auth: {
                     token: token
                 }
             });
 
-            // 更新視圖函數
             function updateView(count) {
                 notificationCountElement.textContent = count;
             }
+
+            function displayNotifications() {
+                notificationListElement.innerHTML = '';
+                const notificationsToDisplay = notifications.slice(0, displayedCount + limit);
+                notificationsToDisplay.forEach(notification => {
+                    const item = document.createElement('div');
+                    item.className = 'notification-item';
+                    item.textContent = notification.text;
+                    notificationListElement.appendChild(item);
+                });
+                loadMoreButton.style.display = notifications.length > displayedCount + limit ? 'block' : 'none';
+            }
+
+            function fetchNotifications() {
+                fetch('/notifications', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    notifications = data.notifications.details;
+                    displayedCount = 0;
+                    updateView(data.notifications.count);
+                    displayNotifications();
+                })
+                .catch(error => console.error('獲取通知數量時發生錯誤:', error));
+            }
+
+            refreshButton.addEventListener('click', () => {
+                if (notificationListContainer.style.display === 'none') {
+                    notificationListContainer.style.display = 'block';
+                    fetchNotifications();
+                } else {
+                    notificationListContainer.style.display = 'none';
+                }
+            });
+
+            loadMoreButton.addEventListener('click', () => {
+                displayedCount += limit;
+                displayNotifications();
+            });
 
             socket.on('connect', () => {
                 console.log('Socket.IO connected');
             });
 
             socket.on('connect_error', (err) => {
-            if (err.message === 'Authentication error') {
-                // 处理认证错误
-                alert('認證錯誤，請重新登錄');
-                window.location.href = '/login.html'; // 重定向到登录页面
-            } else {
-                console.error('Socket.io 連接錯誤:', err);
-            }
-        });
+                if (err.message === 'Authentication error') {
+                    alert('認證錯誤，請重新登錄');
+                    window.location.href = '/login.html';
+                } else {
+                    console.error('Socket.io 連接錯誤:', err);
+                }
+            });
 
-            // 監聽伺服器推送的通知更新事件
             socket.on('notificationUpdate', (data) => {
                 console.log('Received notification update:', data);
                 updateView(data.count);
+                if (notificationListContainer.style.display === 'block') {
+                    fetchNotifications(); // 獲取最新的通知
+                }
             });
 
             // 獲取通知數量
