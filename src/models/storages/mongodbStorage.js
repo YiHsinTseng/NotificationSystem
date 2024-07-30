@@ -48,6 +48,23 @@ class MongoStorage {
       throw error;
     }
   }
+
+  async patchNotification(user_id, notification_id, isRead) {
+    try {
+      // 獲取 UserNotification 實例
+      const userNotification = await UserNotification.findById(user_id);
+      if (!userNotification) {
+        throw new Error('User not found');
+      }
+
+      // 調用實例方法
+      const result = await userNotification.patchNotification(notification_id, isRead);
+      return result;
+    } catch (error) {
+      console.error('Error updating notification:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = MongoStorage;

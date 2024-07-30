@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { generateUserId } = require('../utils/generateId');
-const { notificationSchema } = require('./notificationMongoose.js');
+const { notificationSchema } = require('./notificationMongoose');
 const AppError = require('../utils/appError');
 
 const UserNotificationSchema = new mongoose.Schema({
@@ -12,7 +12,7 @@ const UserNotificationSchema = new mongoose.Schema({
   toJSON: {
     transform(doc, ret) {
       const { _id, ...rest } = ret;
-      const newRet = { user_id: _id, ...rest };
+      const newRet = { _id, ...rest };
       return newRet;
     },
   },
@@ -37,6 +37,34 @@ UserNotificationSchema.statics.getNotifications = async function getNotification
     return { success: true, message: 'Notifications got successfully', notifications };
   }
   return { success: false, message: 'No notifications found for the user' };
+};
+
+UserNotificationSchema.statics.findNotificationById = async function (user_id, notification_id) {
+  const userNotification = await this.findOne({ _id: user_id }).exec();
+  if (!userNotification) {
+    throw new AppError(404, 'User not found or invalid user ID');
+  }
+  const notification = userNotification.notifications.id(notification_id); // Correctly use .id()
+  if (!notification) {
+    throw new AppError(404, 'Notification not found or invalid notification ID');
+  }
+  return { userNotification, notification };
+};
+
+UserNotificationSchema.methods.patchNotification = async function (notification_id, isRead) {
+  // Use this.model to call static method and get UserNotification instance
+  const { userNotification, notification } = await this.model('UserNotification').findNotificationById(this._id, notification_id);
+
+  if (!userNotification || !notification) {
+    throw new AppError(404, 'User not found or invalid notification ID');
+  }
+
+  notification.isRead = isRead;
+
+  // Save the updated UserNotification document
+  await userNotification.save(); // Save the parent document
+
+  return { success: true, message: 'Notification updated successfully' };
 };
 
 UserNotificationSchema.methods.createNotification = async function createNotification(user_id) {

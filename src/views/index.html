@@ -38,6 +38,14 @@
             margin-bottom: 10px;
             padding: 5px;
             border-bottom: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .notification-item.read {
+            background-color: #f0f0f0; /* 已读通知背景色 */
+        }
+        .notification-date {
+            font-size: 12px;
+            color: #888;
         }
         .load-more-button {
             margin-top: 10px;
@@ -59,108 +67,149 @@
 
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script>
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            window.location.href = '/login.html';
-        } else {
-            const notificationCountElement = document.getElementById('notification-count');
-            const notificationListElement = document.getElementById('notification-list');
-            const notificationListContainer = document.getElementById('notification-list-container');
-            const refreshButton = document.getElementById('refresh-button');
-            const loadMoreButton = document.getElementById('load-more-button');
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login.html';
+            } else {
+                const notificationCountElement = document.getElementById('notification-count');
+                const notificationListElement = document.getElementById('notification-list');
+                const notificationListContainer = document.getElementById('notification-list-container');
+                const refreshButton = document.getElementById('refresh-button');
+                const loadMoreButton = document.getElementById('load-more-button');
 
-            let notifications = [];
-            let displayedCount = 0;
-            const limit = 5; // 每次顯示的數量
+                let notifications = [];
+                let displayedCount = 0;
+                const limit = 5; // 每次顯示的數量
 
-            const socket = io({
-                auth: {
-                    token: token
-                }
-            });
-
-            function updateView(count) {
-                notificationCountElement.textContent = count;
-            }
-
-            function displayNotifications() {
-                notificationListElement.innerHTML = '';
-                const notificationsToDisplay = notifications.slice(0, displayedCount + limit);
-                notificationsToDisplay.forEach(notification => {
-                    const item = document.createElement('div');
-                    item.className = 'notification-item';
-                    item.textContent = notification.text;
-                    notificationListElement.appendChild(item);
+                const socket = io({
+                    auth: {
+                        token: token
+                    }
                 });
-                loadMoreButton.style.display = notifications.length > displayedCount + limit ? 'block' : 'none';
-            }
 
-            function fetchNotifications() {
-                fetch('/notifications', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+                function updateView(count) {
+                    notificationCountElement.textContent = count;
+                }
+
+                function formatDate(dateString) {
+                    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+                    return new Date(dateString).toLocaleDateString(undefined, options);
+                }
+
+                function displayNotifications() {
+                    notificationListElement.innerHTML = '';
+                    const notificationsToDisplay = notifications.slice(0, displayedCount + limit);
+                    console.log(notifications)
+                    notificationsToDisplay.forEach(notification => {
+                        const item = document.createElement('div');
+                        item.className = 'notification-item' + (notification.isRead ? ' read' : '');
+                        item.dataset.id = notification.notification_id;
+                        
+                        const text = document.createElement('div');
+                        text.textContent = notification.text;
+                        
+                        const date = document.createElement('div');
+                        date.className = 'notification-date';
+                        date.textContent = formatDate(notification.createdAt);
+                        
+                        item.appendChild(text);
+                        item.appendChild(date);
+                        
+                        item.addEventListener('click', () => {
+                            markAsRead(notification.notification_id);
+                            item.classList.add('read');
+                        });
+                        
+                        notificationListElement.appendChild(item);
+                    });
+                    loadMoreButton.style.display = notifications.length > displayedCount + limit ? 'block' : 'none';
+                }
+
+                function fetchNotifications() {
+                    fetch('/notifications', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        notifications = data.notifications.details;
+                        displayedCount = 0;
+                        updateView(data.notifications.count);
+                        displayNotifications();
+                    })
+                    .catch(error => console.error('獲取通知數量時發生錯誤:', error));
+                }
+
+                function markAsRead(notificationId) {
+                    console.log(notificationId)
+                    fetch(`/notifications/${notificationId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ isRead: true })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('通知已更新:', data);
+                    })
+                    .catch(error => console.error('更新通知狀態時發生錯誤:', error));
+                }
+
+                refreshButton.addEventListener('click', () => {
+                    if (notificationListContainer.style.display === 'none') {
+                        notificationListContainer.style.display = 'block';
+                        fetchNotifications();
+                    } else {
+                        notificationListContainer.style.display = 'none';
                     }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    notifications = data.notifications.details;
-                    displayedCount = 0;
-                    updateView(data.notifications.count);
+                });
+
+                loadMoreButton.addEventListener('click', () => {
+                    displayedCount += limit;
                     displayNotifications();
-                })
-                .catch(error => console.error('獲取通知數量時發生錯誤:', error));
-            }
+                });
 
-            refreshButton.addEventListener('click', () => {
-                if (notificationListContainer.style.display === 'none') {
-                    notificationListContainer.style.display = 'block';
-                    fetchNotifications();
-                } else {
-                    notificationListContainer.style.display = 'none';
-                }
-            });
+                socket.on('connect', () => {
+                    console.log('Socket.IO connected');
+                });
 
-            loadMoreButton.addEventListener('click', () => {
-                displayedCount += limit;
-                displayNotifications();
-            });
-
-            socket.on('connect', () => {
-                console.log('Socket.IO connected');
-            });
-
-            socket.on('connect_error', (err) => {
-                if (err.message === 'Authentication error') {
-                    alert('認證錯誤，請重新登錄');
-                    window.location.href = '/login.html';
-                } else {
-                    console.error('Socket.io 連接錯誤:', err);
-                }
-            });
-
-            socket.on('notificationUpdate', (data) => {
-                console.log('Received notification update:', data);
-                updateView(data.count);
-                if (notificationListContainer.style.display === 'block') {
-                    fetchNotifications(); // 獲取最新的通知
-                }
-            });
-
-            // 獲取通知數量
-            function fetchNotificationCount() {
-                fetch('/notifications', {
-                    headers: {
-                        'Authorization': `Bearer ${token}` // 把 JWT 作為 Authorization header 傳遞
+                socket.on('connect_error', (err) => {
+                    if (err.message === 'Authentication error') {
+                        alert('認證錯誤，請重新登錄');
+                        window.location.href = '/login.html';
+                    } else {
+                        console.error('Socket.io 連接錯誤:', err);
                     }
-                })
-                .then(response => response.json())
-                .then(data => updateView(data.count))
-                .catch(error => console.error('獲取通知數量時發生錯誤:', error));
-            }
+                });
 
-            // 初次加載時獲取通知數量
-            fetchNotificationCount();
-        }
+                socket.on('notificationUpdate', (data) => {
+                    console.log('Received notification update:', data);
+                    updateView(data.count);
+                    if (notificationListContainer.style.display === 'block') {
+                        fetchNotifications(); // 獲取最新的通知
+                    }
+                });
+
+                // 獲取通知數量
+                function fetchNotificationCount() {
+                    fetch('/notifications', {
+                        headers: {
+                            'Authorization': `Bearer ${token}` // 把 JWT 作為 Authorization header 傳遞
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => updateView(data.count))
+                    .catch(error => console.error('獲取通知數量時發生錯誤:', error));
+                }
+
+                // 初次加載時獲取通知數量
+                fetchNotificationCount();
+            }
+        });
     </script>
 </body>
 </html>

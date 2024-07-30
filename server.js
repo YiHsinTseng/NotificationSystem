@@ -75,7 +75,7 @@ io.on('connection', async (socket) => {
 });
 
 // general error handler
-app.use(apiErrorHandler);
+// app.use(apiErrorHandler);
 
 server.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

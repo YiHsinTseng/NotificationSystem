@@ -36,8 +36,17 @@ const addNotifications = async (notificationRepository, user_id, message) => {
   }
 };
 
+const patchNotification = async (notificationRepository, user_id, notification_id, isRead) => {
+  try {
+    await notificationRepository.patchNotification(user_id, notification_id, isRead);
+  } catch (error) {
+    console.error('獲取通知時發生錯誤:', error.message || error);
+    throw new Error('業務邏輯處理錯誤');
+  }
+};
 module.exports = {
   getNotificationsCount,
   addNotifications,
   getNotifications,
+  patchNotification,
 };

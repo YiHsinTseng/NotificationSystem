@@ -12,4 +12,10 @@ function generateUserId() {
   return uuidv4();
 }
 
-module.exports = { generateGroupId, generateItemId, generateUserId };
+function generateNotificationId() {
+  return uuidv4();
+}
+
+module.exports = {
+  generateGroupId, generateItemId, generateUserId, generateNotificationId,
+};

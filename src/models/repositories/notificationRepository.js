@@ -43,6 +43,10 @@ class NotificationAsyncRepository {
     const notifications = await this.storage.getAllNotifications(user_id);
     return notifications;
   }
+
+  async patchNotification(user_id, notification_id, isRead) {
+    await this.storage.patchNotification(user_id, notification_id, isRead);
+  }
 }
 
 module.exports = { NotificationRepository, NotificationAsyncRepository };

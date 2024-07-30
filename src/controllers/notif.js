@@ -39,6 +39,25 @@ const addNotification = async (req, res) => {
   }
 };
 
+const patchNotification = async (req, res) => {
+  try {
+    const notificationRepository = req.app.get('notificationRepository');
+    // const io = req.app.get('io');
+    const { user_id } = req.user;
+    const { notification_id } = req.params;
+    const { isRead } = req.body;
+    await notifSerivce.patchNotification(notificationRepository, user_id, notification_id, isRead);
+
+    const notifications = await notifSerivce.getNotifications(notificationRepository, user_id);
+    // io.emit('notificationUpdate', notifications); // 只要推送{count} 要確保資料格式很熟
+
+    res.status(200).json({ message: 'Notification updated successfully', notifications });
+  } catch (error) {
+    console.error('處理 POST 請求時發生錯誤:', error.message || error);
+    res.status(500).send('內部服務器錯誤');
+  }
+};
+
 // sub notif
 // 提供自己的id以及訂閱條件給訂閱服務器，讓服務器透過爬取的資料推播回主通知系統
 
@@ -48,4 +67,5 @@ const addNotification = async (req, res) => {
 module.exports = {
   getNotification,
   addNotification,
+  patchNotification,
 };
