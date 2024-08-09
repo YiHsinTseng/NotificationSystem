@@ -4,6 +4,17 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 
+const mqtt = require('mqtt');
+
+// MQTT 伺服器配置
+const MQTT_BROKER_URL = 'mqtt://localhost';
+const MQTT_TOPIC = 'notifications';
+const mqttClient = mqtt.connect(MQTT_BROKER_URL, {
+  // clientId: 'test', // 為 MQTT 客戶端指定 clientId
+  // clean: false, // 允許持久化會話
+  // connectTimeout: 30000,
+});
+
 require('./config/dbConnect');
 
 const userRoute = require('./src/routes/user');
@@ -18,6 +29,8 @@ const notifService = require('./src/services/notifAsync'); // Import Notificatio
 const { NotificationAsyncRepository } = require('./src/models/repositories/notificationRepository');
 const MongodbStorage = require('./src/models/storages/mongodbStorage');
 
+const { addjobNotifications } = require('./src/services/api');
+
 const app = express();
 const port = 3000;
 
@@ -25,7 +38,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 app.set('io', io);
 
-const apiErrorHandler = require('./src/middlewares/apiErrorHandler');
+// const apiErrorHandler = require('./src/middlewares/apiErrorHandler');
 
 // Create an instance of NotificationRepository and set it in the app
 // const memoryStorage = new MemoryStorage();
@@ -53,14 +66,44 @@ app.use('/notifications', notifRoute);
 //   });
 // });
 
+const QOS_LEVEL = 1; // 設置為 1 或 2
+
+// 訂閱主題
+mqttClient.on('connect', () => {
+  console.log('Connected to MQTT broker.');
+  mqttClient.subscribe(MQTT_TOPIC, { qos: QOS_LEVEL }, (err) => {
+    if (err) {
+      console.error('Subscription error:', err);
+    } else {
+      console.log(`Subscribed to topic '${MQTT_TOPIC}'`);
+    }
+  });
+});
+
+// 處理接收到的消息
+mqttClient.on('message', async (topic, message) => {
+  if (topic === MQTT_TOPIC) {
+    // console.log(`Received message on topic '${MQTT_TOPIC}':`, message.toString());
+    const messageObject = JSON.parse(message.toString());
+    const user_id = await addjobNotifications(notificationRepository, messageObject);
+    if (user_id) {
+      const notification = await notifService.getNotifications(notificationRepository, user_id);
+      io.emit('notificationUpdate', notification);
+      console.log(notification.count);
+    }
+  }
+});
+
+// const userConnections = new Map();
+
 const { authenticateJwtSocket } = require('./src/middlewares/authenticate');
 
 io.use(authenticateJwtSocket);
 io.on('connection', async (socket) => {
   console.log('A new client connected');
-
   try {
     const user_id = socket.user; // 確保正確提取用戶 ID
+    // userConnections.set(user_id, socket); // 存到全局
     // console.log(user_id);
     const notification = await notifService.getNotifications(notificationRepository, user_id);
     socket.emit('notificationUpdate', notification);

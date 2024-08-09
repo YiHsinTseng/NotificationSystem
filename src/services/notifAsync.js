@@ -26,10 +26,10 @@ const getNotifications = async (notificationRepository, user_id) => {
   }
 };
 
-const addNotifications = async (notificationRepository, user_id, message) => {
+const addNotifications = async (notificationRepository, user_id, message, link) => {
   try {
     // If incrementNotifications involves async operations, await it
-    await notificationRepository.addNotification(user_id, message);
+    await notificationRepository.addNotification(user_id, message, link);
     // 如果要合併的話會在此 回傳最新的notifications (getNotifications)
   } catch (error) {
     console.error('增加通知時發生錯誤:', error.message || error);

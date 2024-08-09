@@ -53,6 +53,44 @@
             font-size: 16px;
             cursor: pointer;
         }
+        /* 新增的職位資訊樣式 */
+        .job-list-container {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 600px;
+            background-color: #f9f9f9;
+        }
+        .job-item {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .job-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .job-company {
+            font-size: 16px;
+            color: #555;
+        }
+        .job-desc {
+            font-size: 14px;
+            color: #333;
+        }
+        .job-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 10px;
+            font-size: 14px;
+            color: #007bff;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -63,6 +101,10 @@
             <div class="notification-list" id="notification-list"></div>
             <button class="load-more-button" id="load-more-button">查看更多</button>
         </div>
+    </div>
+    <!-- 新增職位資訊部分 -->
+    <div class="job-list-container" id="job-list-container">
+        <div id="job-list"></div>
     </div>
 
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
@@ -99,7 +141,10 @@
 
                 function displayNotifications() {
                     notificationListElement.innerHTML = '';
-                    const notificationsToDisplay = notifications.slice(0, displayedCount + limit);
+                    // const notificationsToDisplay = notifications.slice(0, displayedCount + limit);
+                    const notificationsToDisplay = notifications
+                        .slice(0, displayedCount + limit)
+                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     // console.log(notifications)
                     notificationsToDisplay.forEach(notification => {
                         const item = document.createElement('div');
@@ -117,6 +162,7 @@
                         item.appendChild(date);
                         
                         item.addEventListener('click', () => {
+                            openJobs(notification.notification_id) 
                             markAsRead(notification.notification_id);
                             item.classList.add('read');
                         });
@@ -135,6 +181,7 @@
                     .then(response => response.json())
                     .then(data => {
                         notifications = data.notifications.details;
+                        notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                         displayedCount = 0;
                         updateView(data.notifications.count);
                         displayNotifications();
@@ -142,11 +189,77 @@
                     .catch(error => console.error('獲取通知數量時發生錯誤:', error));
                 }
 
+                function openJobs(notificationId) {
+                    // 查找通知對象
+                    const notification = notifications.find(n => n.notification_id === notificationId);
+                    // 如果有 link 屬性，根據 url 和 data 發送 API 請求
+                    if (notification.link && notification.link.url) {
+                        console.log("link");
+                        const url = notification.link.url;
+                        const data = notification.link.data || {};
+                        console.log(url);
+                        console.log(data);
+
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({data})
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data); // 修正變數名
+                            const jobListElement = document.getElementById('job-list');
+                            jobListElement.innerHTML = '';
+
+                            data.items.forEach(job => {
+                                const jobItem = document.createElement('div');
+                                jobItem.className = 'job-item';
+
+                                // 職位標題作為鏈接
+                                const link = document.createElement('a');
+                                link.className = 'job-link';
+                                link.href = job.job_link;
+                                link.target = '_blank'; // 讓鏈接在新窗口打開
+
+                                const title = document.createElement('div');
+                                title.className = 'job-title';
+                                title.textContent = job.job_title;
+
+                                link.appendChild(title);
+
+                                // 公司名稱
+                                const company = document.createElement('div');
+                                company.className = 'job-company';
+                                company.textContent = job.company_name;
+
+                                // 職位描述
+                                const desc = document.createElement('div');
+                                desc.className = 'job-desc';
+                                const truncatedDesc = job.job_desc.length > 100 ? job.job_desc.substring(0, 100) + '...' : job.job_desc;
+                                desc.textContent = truncatedDesc;
+
+                                // 將所有內容加入 jobItem
+                                jobItem.appendChild(link);
+                                jobItem.appendChild(company);
+                                jobItem.appendChild(desc);
+
+                                // 將 jobItem 加入 jobListElement
+                                jobListElement.appendChild(jobItem);
+                            });
+                        })
+                        .catch(error => console.error('獲取職位資訊時發生錯誤:', error));
+                    }
+                }
+
+
+
                 function markAsRead(notificationId) {
-                    // 查找通知对象
+                    // 查找通知對象
                     const notification = notifications.find(n => n.notification_id === notificationId);
 
-                    // 如果通知不存在或已读，则不发起 API 请求
+                    // 如果通知不存在或已讀，則不發起 API 請求
                     if (!notification || notification.isRead) {
                         return;
                     }

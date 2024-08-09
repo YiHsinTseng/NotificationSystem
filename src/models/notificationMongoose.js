@@ -12,6 +12,13 @@ const notificationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now, // 默認為當前時間
   },
+  link: {
+    url: { type: String },
+    data: {
+      type: Map,
+      default: {},
+    },
+  },
   isRead: {
     type: Boolean,
     default: false, // 默認為未讀

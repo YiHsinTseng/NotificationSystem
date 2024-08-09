@@ -10,9 +10,9 @@ class NotificationRepository {
     return this.storage.getNotificationsCount();
   }
 
-  addNotification(message) {
+  addNotification(message, link) {
     const id = Date.now();
-    const notification = new NotificationAync({ id, text: message });
+    const notification = new NotificationAync({ id, text: message, link });
     this.storage.addNotification(notification);
   }
 
@@ -31,10 +31,10 @@ class NotificationAsyncRepository {
     return count;
   }
 
-  async addNotification(user_id, message) {
+  async addNotification(user_id, message, link) {
     const id = Date.now(); // 也可用uuid
     const notification = new NotificationAync({
-      id, text: message, receiver: user_id, sender: 'system',
+      id, text: message, receiver: user_id, sender: 'system', link,
     });
     await this.storage.addNotification(user_id, notification);
   }
