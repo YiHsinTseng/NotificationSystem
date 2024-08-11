@@ -91,6 +91,10 @@
             color: #007bff;
             text-decoration: none;
         }
+        .job-date, .job-source, .job-info {
+            font-size: 12px;
+            color: #888;
+        }
     </style>
 </head>
 <body>
@@ -102,6 +106,7 @@
             <button class="load-more-button" id="load-more-button">查看更多</button>
         </div>
     </div>
+    <h3>Job SideBar</h3>
     <!-- 新增職位資訊部分 -->
     <div class="job-list-container" id="job-list-container">
         <div id="job-list"></div>
@@ -213,6 +218,9 @@
                             const jobListElement = document.getElementById('job-list');
                             jobListElement.innerHTML = '';
 
+                            // Sort jobs by update_date
+                            data.items.sort((a, b) => new Date(b.update_date) - new Date(a.update_date));
+
                             data.items.forEach(job => {
                                 const jobItem = document.createElement('div');
                                 jobItem.className = 'job-item';
@@ -240,10 +248,28 @@
                                 const truncatedDesc = job.job_desc.length > 100 ? job.job_desc.substring(0, 100) + '...' : job.job_desc;
                                 desc.textContent = truncatedDesc;
 
+                                // 更新日期
+                                const updateDate = document.createElement('div');
+                                updateDate.className = 'job-date';
+                                updateDate.textContent = `更新日期: ${formatDate(job.update_date)}`;
+
+                                // 來源
+                                const source = document.createElement('div');
+                                source.className = 'job-source';
+                                source.textContent = `來源: ${job.source}`;
+
+                                // 職位資訊
+                                const jobInfo = document.createElement('div');
+                                jobInfo.className = 'job-info';
+                                jobInfo.textContent = `職位資訊: ${job.job_info}`;
+
                                 // 將所有內容加入 jobItem
                                 jobItem.appendChild(link);
                                 jobItem.appendChild(company);
                                 jobItem.appendChild(desc);
+                                jobItem.appendChild(updateDate);
+                                jobItem.appendChild(source);
+                                jobItem.appendChild(jobInfo);
 
                                 // 將 jobItem 加入 jobListElement
                                 jobListElement.appendChild(jobItem);
