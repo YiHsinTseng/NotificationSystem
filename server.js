@@ -10,9 +10,10 @@ const mqtt = require('mqtt');
 const MQTT_BROKER_URL = 'mqtt://localhost';
 const MQTT_TOPIC = 'notifications';
 const mqttClient = mqtt.connect(MQTT_BROKER_URL, {
-  // clientId: 'test', // 為 MQTT 客戶端指定 clientId
-  // clean: false, // 允許持久化會話
-  // connectTimeout: 30000,
+  clientId: 'test', // 為 MQTT 客戶端指定 clientId
+  clean: false, // 允許持久化會話
+  connectTimeout: 30000, // 設置連接超時時間
+  reconnectPeriod: 10000, // 設置重連間隔為 10 秒
 });
 
 require('./config/dbConnect');
@@ -66,6 +67,7 @@ app.use('/notifications', notifRoute);
 //   });
 // });
 
+// 設置消息的 QoS 等級
 const QOS_LEVEL = 1; // 設置為 1 或 2
 
 // 訂閱主題
