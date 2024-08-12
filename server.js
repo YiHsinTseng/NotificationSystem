@@ -1,3 +1,4 @@
+require('dotenv').config(); // 引入並加載 .env 文件
 const path = require('path');
 const express = require('express');
 
@@ -7,7 +8,8 @@ const socketIo = require('socket.io');
 const mqtt = require('mqtt');
 
 // MQTT 伺服器配置
-const MQTT_BROKER_URL = 'mqtt://localhost';
+// const MQTT_BROKER_URL = 'mqtt://localhost';
+const { MQTT_BROKER_URL } = process.env;
 const MQTT_TOPIC = 'notifications';
 const mqttClient = mqtt.connect(MQTT_BROKER_URL, {
   clientId: 'test', // 為 MQTT 客戶端指定 clientId
@@ -33,7 +35,7 @@ const MongodbStorage = require('./src/models/storages/mongodbStorage');
 const { addjobNotifications } = require('./src/services/api');
 
 const app = express();
-const port = 3000;
+const port = 5050;
 
 const server = http.createServer(app);
 const io = socketIo(server);
