@@ -5,19 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>通知系統</title>
     <style>
-        .notification-container {
+        body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            height: 100vh;
+        }
+        .notification-container {
             width: 300px;
-            background-color: #f9f9f9;
+            flex: 1; /* 讓通知容器彈性地佔用剩餘空間 */
+            margin-top: 25px;
+            padding: 10px;
+        }
+        .job-list-container {
+            width: 600px;
+            flex: 1; /* 讓職位資訊容器佔用更多空間 */
+            padding: 10px;
+            margin-left: 15px;
         }
         .notification-count {
             font-size: 24px;
             font-weight: bold;
             color: #333;
+        }
+        .notification-count::after {
+            content: ' 筆通知';
+            font-size: 16px; /* 根據需要調整字體大小 */
+            color: #333; /* 根據需要調整顏色 */
         }
         .refresh-button {
             margin-top: 10px;
@@ -53,16 +69,7 @@
             font-size: 16px;
             cursor: pointer;
         }
-        /* 新增的職位資訊樣式 */
-        .job-list-container {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            width: 600px;
-            background-color: #f9f9f9;
-        }
+        /* 職位資訊樣式 */
         .job-item {
             margin-bottom: 20px;
             padding: 10px;
@@ -95,23 +102,35 @@
             font-size: 12px;
             color: #888;
         }
+        .subscribe-button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            font-size: 14px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .subscribe-button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
+    <div class="job-list-container" id="job-list-container">
+        <h2>Job SideBar</h2>
+        <div id="job-list"></div>
+    </div>
     <div class="notification-container">
         <div class="notification-count" id="notification-count">0</div>
         <button class="refresh-button" id="refresh-button">查看通知</button>
+        <button class="logout-button" id="logout-button">登出</button> <!-- 新增登出按鈕 -->
         <div class="notification-list-container" id="notification-list-container">
             <div class="notification-list" id="notification-list"></div>
             <button class="load-more-button" id="load-more-button">查看更多</button>
         </div>
     </div>
-    <h3>Job SideBar</h3>
-    <!-- 新增職位資訊部分 -->
-    <div class="job-list-container" id="job-list-container">
-        <div id="job-list"></div>
-    </div>
-
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -124,6 +143,8 @@
                 const notificationListContainer = document.getElementById('notification-list-container');
                 const refreshButton = document.getElementById('refresh-button');
                 const loadMoreButton = document.getElementById('load-more-button');
+                const logoutButton = document.getElementById('logout-button'); // 新增登出按鈕
+
 
                 let notifications = [];
                 let displayedCount = 0;
@@ -167,7 +188,11 @@
                         item.appendChild(date);
                         
                         item.addEventListener('click', () => {
-                            openJobs(notification.notification_id) 
+                            //根據sender判斷屬性，來發送api
+                            console.log(notification.sender)
+                            if(notification.sender=="api_routine"){
+                              openJobs(notification.notification_id) 
+                            }
                             markAsRead(notification.notification_id);
                             item.classList.add('read');
                         });
@@ -178,6 +203,7 @@
                 }
 
                 function fetchNotifications() {
+                    // 發送自身api（由後端發送）
                     fetch('/notifications', {
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -194,9 +220,10 @@
                     .catch(error => console.error('獲取通知數量時發生錯誤:', error));
                 }
 
-                function openJobs(notificationId) {
+                async function openJobs(notificationId) {
                     // 查找通知對象
                     const notification = notifications.find(n => n.notification_id === notificationId);
+                    //可能需要加入type區隔不同通知操作（即時通知、定時通知、系統通知）
                     // 如果有 link 屬性，根據 url 和 data 發送 API 請求
                     if (notification.link && notification.link.url) {
                         console.log("link");
@@ -205,6 +232,7 @@
                         console.log(url);
                         console.log(data);
 
+                        //可能需要透過後端前處理結合有訂閱的網站或公司清單（由前端發送可能不太好，外掛ID會洩漏）
                         fetch(url, {
                             method: 'POST',
                             headers: {
@@ -225,22 +253,43 @@
                                 const jobItem = document.createElement('div');
                                 jobItem.className = 'job-item';
 
-                                // 職位標題作為鏈接
-                                const link = document.createElement('a');
-                                link.className = 'job-link';
-                                link.href = job.job_link;
-                                link.target = '_blank'; // 讓鏈接在新窗口打開
-
-                                const title = document.createElement('div');
+                                const title = document.createElement('a');
                                 title.className = 'job-title';
                                 title.textContent = job.job_title;
+                                title.href = job.job_link;
+                                title.target = '_blank'; // 讓鏈接在新窗口打開
+                                const subscribeButtonTitle = document.createElement('button');
+                                subscribeButtonTitle.className = 'subscribe-button';
+                                subscribeButtonTitle.textContent = '訂閱職缺';
+                                subscribeButtonTitle.addEventListener('click', async() => {
+                                    const job_ids=[job.job_id]
+                                    console.log(job.job_id)
+                                    const company_names=[]
+                                    await subscribeToJob(job_ids,company_names);
+                                    await openJobs(notification.notification_id) 
+                                });
 
-                                link.appendChild(title);
+                                jobItem.appendChild(title);
+                                jobItem.appendChild(subscribeButtonTitle);
 
                                 // 公司名稱
                                 const company = document.createElement('div');
                                 company.className = 'job-company';
                                 company.textContent = job.company_name;
+
+                                const subscribeButtonCompany = document.createElement('button');
+                                subscribeButtonCompany.className = 'subscribe-button';
+                                subscribeButtonCompany.textContent = '訂閱公司';
+                                subscribeButtonCompany.addEventListener('click', async() => {
+                                    const company_names=[job.company_name]
+                                    const job_ids = []; // 或者設置你希望的默認值
+                                    await subscribeToJob(job_ids,company_names);
+                                    await openJobs(notificationId) 
+                                });
+
+                                company.appendChild(subscribeButtonCompany);
+                                jobItem.appendChild(company);
+                                
 
                                 // 職位描述
                                 const desc = document.createElement('div');
@@ -264,7 +313,6 @@
                                 jobInfo.textContent = `職位資訊: ${job.job_info}`;
 
                                 // 將所有內容加入 jobItem
-                                jobItem.appendChild(link);
                                 jobItem.appendChild(company);
                                 jobItem.appendChild(desc);
                                 jobItem.appendChild(updateDate);
@@ -280,6 +328,31 @@
                 }
 
 
+                async function subscribeToJob(job_ids, company_names) {
+                    // 發送訂閱請求(第三方api)
+                    fetch('http://localhost:4000/api/id_subscriptions', {//（由前端發送可能不太好，外掛ID會洩漏）
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ 
+                            "type": 1,
+                            "data": {
+                                "user_id": "0ce32985-7fda-4c20-ad62-3ac0a9b23233",//之後再改(前端目前可能不知道user_id)所以要在登入時存起來嗎
+                                "sub": {
+                                    "job_ids": job_ids, // Include job IDs here
+                                    "company_names": company_names // Include company names here
+                                }
+                            }
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(`已訂閱成功`);
+                    })
+                    .catch(error => console.error('訂閱職位時發生錯誤:', error));
+                }
 
                 function markAsRead(notificationId) {
                     // 查找通知對象
@@ -322,6 +395,10 @@
                     displayNotifications();
                 });
 
+                logoutButton.addEventListener('click', () => {
+                    logout(); // 登出
+                });
+
                 socket.on('connect', () => {
                     console.log('Socket.IO connected');
                 });
@@ -342,6 +419,13 @@
                         fetchNotifications(); // 獲取最新的通知
                     }
                 });
+
+                function logout() {
+                    // 清除 localStorage 中的 token
+                    localStorage.removeItem('authToken');
+                    // 重定向到登錄頁面
+                    window.location.href = '/login.html';
+                }
 
                 // 獲取通知數量
                 function fetchNotificationCount() {

@@ -6,7 +6,7 @@ const notificationSchema = new mongoose.Schema({
     type: String, default: generateNotificationId, alias: 'notification_id',
   },
   text: { type: String, required: true },
-  sender: { type: String, required: true }, // 寄件者
+  sender: { type: String, required: true }, // 寄件者 （需要多加一個type嗎）
   receiver: { type: String, required: true }, // 接收者
   createdAt: {
     type: Date,

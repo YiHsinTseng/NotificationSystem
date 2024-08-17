@@ -11,6 +11,9 @@ const mqtt = require('mqtt');
 // const MQTT_BROKER_URL = 'mqtt://localhost';
 const { MQTT_BROKER_URL } = process.env;
 const MQTT_TOPIC = 'notifications';
+const MQTT_JOB = 'job_id_channel';
+const MQTT_COMPANY = 'company_name_channel';
+
 const mqttClient = mqtt.connect(MQTT_BROKER_URL, {
   clientId: 'test', // 為 MQTT 客戶端指定 clientId
   clean: false, // 允許持久化會話
@@ -32,7 +35,7 @@ const notifService = require('./src/services/notifAsync'); // Import Notificatio
 const { NotificationAsyncRepository } = require('./src/models/repositories/notificationRepository');
 const MongodbStorage = require('./src/models/storages/mongodbStorage');
 
-const { addjobNotifications } = require('./src/services/api');
+const { addjobNotifications, addfastNotifications } = require('./src/services/api');
 
 const app = express();
 const port = 5050;
@@ -82,14 +85,51 @@ mqttClient.on('connect', () => {
       console.log(`Subscribed to topic '${MQTT_TOPIC}'`);
     }
   });
+  mqttClient.subscribe(MQTT_JOB, { qos: QOS_LEVEL }, (err) => {
+    if (err) {
+      console.error('Subscription error:', err);
+    } else {
+      console.log(`Subscribed to topic '${MQTT_JOB}'`);
+    }
+  });
+  mqttClient.subscribe(MQTT_COMPANY, { qos: QOS_LEVEL }, (err) => {
+    if (err) {
+      console.error('Subscription error:', err);
+    } else {
+      console.log(`Subscribed to topic '${MQTT_COMPANY}'`);
+    }
+  });
 });
 
-// 處理接收到的消息
+// 處理接收到的消息，就生成簡單消息並更新通知數量
 mqttClient.on('message', async (topic, message) => {
   if (topic === MQTT_TOPIC) {
     // console.log(`Received message on topic '${MQTT_TOPIC}':`, message.toString());
     const messageObject = JSON.parse(message.toString());
-    const user_id = await addjobNotifications(notificationRepository, messageObject);
+    const sender = 'api_routine';
+    const user_id = await addjobNotifications(notificationRepository, messageObject, sender);
+    if (user_id) {
+      const notification = await notifService.getNotifications(notificationRepository, user_id);
+      io.emit('notificationUpdate', notification);
+      console.log(notification.count);
+    }
+  }
+  if (topic === MQTT_JOB) {
+    // console.log(`Received message on topic '${MQTT_JOB}':`, message.toString());
+    const messageObject = JSON.parse(message.toString());
+    const sender = MQTT_JOB;
+    const user_id = await addfastNotifications(notificationRepository, messageObject, sender);
+    if (user_id) {
+      const notification = await notifService.getNotifications(notificationRepository, user_id);
+      io.emit('notificationUpdate', notification);
+      console.log(notification.count);
+    }
+  }
+  if (topic === MQTT_COMPANY) {
+    // console.log(`Received message on topic '${MQTT_COMPANY}':`, message.toString());
+    const messageObject = JSON.parse(message.toString());
+    const sender = MQTT_COMPANY;
+    const user_id = await addfastNotifications(notificationRepository, messageObject, sender);
     if (user_id) {
       const notification = await notifService.getNotifications(notificationRepository, user_id);
       io.emit('notificationUpdate', notification);
