@@ -1,7 +1,7 @@
 // const notifSerivce = require('../services/notifAsync');
 const notifSerivce = require('../services/notifAsync');
 
-const getNotification = async (req, res) => {
+const getNotification = async (req, res, next) => {
   try {
     const notificationRepository = req.app.get('notificationRepository');
     // const io = req.app.get('io');
@@ -12,11 +12,10 @@ const getNotification = async (req, res) => {
 
     res.status(200).json({ message: 'Notification updated successfully', notifications });
   } catch (error) {
-    console.error('處理 POST 請求時發生錯誤:', error.message || error);
-    res.status(500).send('內部服務器錯誤');
+    next(error);
   }
 };
-const addNotification = async (req, res) => {
+const addNotification = async (req, res, next) => {
   try {
     const notificationRepository = req.app.get('notificationRepository');
     const io = req.app.get('io');
@@ -34,12 +33,11 @@ const addNotification = async (req, res) => {
 
     res.status(200).send('Notification updated successfully');
   } catch (error) {
-    console.error('處理 POST 請求時發生錯誤:', error.message || error);
-    res.status(500).send('內部服務器錯誤');
+    next(error);
   }
 };
 
-const patchNotification = async (req, res) => {
+const patchNotification = async (req, res, next) => {
   try {
     const notificationRepository = req.app.get('notificationRepository');
     // const io = req.app.get('io');
@@ -53,8 +51,7 @@ const patchNotification = async (req, res) => {
 
     res.status(200).json({ message: 'Notification Readed successfully' });
   } catch (error) {
-    console.error('處理 POST 請求時發生錯誤:', error.message || error);
-    res.status(500).send('內部服務器錯誤');
+    next(error);
   }
 };
 
