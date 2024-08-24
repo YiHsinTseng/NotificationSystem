@@ -16,6 +16,14 @@ function generateNotificationId() {
   return uuidv4();
 }
 
+function generatePluginId() {
+  return uuidv4();
+}
+
+function generatePluginUserId() {
+  return uuidv4();
+}
+
 module.exports = {
-  generateGroupId, generateItemId, generateUserId, generateNotificationId,
+  generateGroupId, generateItemId, generateUserId, generateNotificationId, generatePluginId, generatePluginUserId,
 };

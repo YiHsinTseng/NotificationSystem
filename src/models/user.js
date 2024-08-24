@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { generateUserId } = require('../utils/generateId');
 const UserNotification = require('./userNotificationMongoose');
+const UserPlugin = require('./userPluginMongoose');
 const AppError = require('../utils/appError');
 
 const userSchema = new mongoose.Schema({
@@ -23,6 +24,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     minlength: 1,
     maxlength: 50,
+  },
+  public_id: { // 先有public_id就好，之後再考慮多plugin_id
+    type: String,
+    unique: true,
+    default: generateUserId(), // 生成唯一的 public_id
   },
   googleID: {
     type: String,
@@ -75,9 +81,18 @@ userSchema.methods.comparePassword = function comparePassword(password) {
 };
 
 // 實現 generateAuthToken 方法
+// userSchema.methods.generateAuthToken = function generateAuthToken() {
+//   const tokenObject = {
+//     user_id: this.user_id, email: this.email, version: 'v1.0',
+//   };
+//   const token = jwt.sign(tokenObject, process.env.PASSPORT_SECRET, { expiresIn: '7d' });
+//   return token;
+// };
 userSchema.methods.generateAuthToken = function generateAuthToken() {
   const tokenObject = {
-    user_id: this.user_id, email: this.email, version: 'v1.0',
+    user_id: this.public_id, // 使用 public_id 替代 user_id
+    email: this.email,
+    version: 'v1.0',
   };
   const token = jwt.sign(tokenObject, process.env.PASSPORT_SECRET, { expiresIn: '7d' });
   return token;
@@ -87,11 +102,19 @@ userSchema.methods.generateAuthToken = function generateAuthToken() {
 userSchema.methods.createUser = async function createUser() {
   await this.save();
 
+  // 創建user時同時建通知表
   const userNotification = new UserNotification({
     _id: this._id,
     notifications: [],
   });
   await userNotification.save();
+
+  // 創建user時同時建外掛表
+  const userPlugin = new UserPlugin({
+    _id: this._id,
+    notifications: [],
+  });
+  await userPlugin.save();
 
   return { success: true, message: 'User signed up successfully.' };
 };
@@ -169,8 +192,34 @@ userSchema.pre('save', async function saveUser(next) {
   if (this.password && (this.isNew || this.isModified('password'))) {
     this.password = await bcrypt.hash(this.password, 10);
   }
+  if (!this.public_id) {
+    this.public_id = generateUserId();
+  }
   next();
 });
+
+userSchema.statics.findUserByPublicId = async function (public_id) {
+  try {
+    const user = await this.findOne({ public_id });
+    return user || null;
+  } catch (error) {
+    console.error('Error finding user by public_id:', error);
+    throw error;
+  }
+};
+
+userSchema.statics.findPublicIdByUserId = async function (user_id) {
+  try {
+    const user = await this.findById(user_id, 'public_id'); // 只返回 public_id 字段
+    if (user) {
+      return user.public_id;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error finding public_id by user_id:', error);
+    throw error;
+  }
+};
 
 const User = mongoose.model('User', userSchema);
 

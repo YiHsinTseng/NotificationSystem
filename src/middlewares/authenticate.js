@@ -44,7 +44,6 @@ const authenticateAdmin = (req, res, next) => {
   if (req.user.email !== 'admin123@gmail.com') {
     return res.status(403).send({ status: 'fail', message: 'Access denied. You are not an admin.' });
   }
-
   next();
 };
 

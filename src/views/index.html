@@ -19,7 +19,7 @@
             margin-top: 25px;
             padding: 10px;
         }
-        .job-list-container {
+        .side-bar-container {
             width: 600px;
             flex: 1; /* 讓職位資訊容器佔用更多空間 */
             padding: 10px;
@@ -35,13 +35,21 @@
             font-size: 16px; /* 根據需要調整字體大小 */
             color: #333; /* 根據需要調整顏色 */
         }
-        .refresh-button {
+        .refresh-button, .plugin-button {
             margin-top: 10px;
             padding: 5px 10px;
             font-size: 16px;
             cursor: pointer;
         }
-        .notification-list-container {
+        .plugin-button {
+            margin-top: 10px;
+            background-color: #28a745;
+            color: #fff;
+        }
+        .plugin-button:hover {
+            background-color: #218838;
+        }
+        .notification-list-container, .plugin-container {
             display: none; /* 初始隱藏 */
             max-height: 300px;
             overflow-y: auto;
@@ -50,7 +58,7 @@
             padding: 10px;
             background-color: #fff;
         }
-        .notification-item {
+        .notification-item, .plugin-item {
             margin-bottom: 10px;
             padding: 5px;
             border-bottom: 1px solid #ddd;
@@ -63,11 +71,39 @@
             font-size: 12px;
             color: #888;
         }
-        .load-more-button {
+        .load-more-button, .plugin-load-more-button {
             margin-top: 10px;
             padding: 5px 10px;
             font-size: 16px;
             cursor: pointer;
+        }
+        .plugin-list-container {
+            display: block;
+        }
+        .plugin-item {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .plugin-action-button {
+            margin-top: 5px;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .plugin-action-button.add {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .plugin-action-button.remove {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .plugin-action-button.add:hover {
+            background-color: #0056b3;
+        }
+        .plugin-action-button.remove:hover {
+            background-color: #c82333;
         }
         /* 職位資訊樣式 */
         .job-item {
@@ -118,17 +154,27 @@
     </style>
 </head>
 <body>
-    <div class="job-list-container" id="job-list-container">
-        <h2>Job SideBar</h2>
-        <div id="job-list"></div>
+    <div class="side-bar-container" id="side-bar-container">
+        <div class="job-list-container" id="job-list-container">
+            <h2>Job SideBar</h2>
+            <div id="job-list"></div>
+        </div>
     </div>
     <div class="notification-container">
         <div class="notification-count" id="notification-count">0</div>
         <button class="refresh-button" id="refresh-button">查看通知</button>
+        <button class="plugin-button" id="plugin-button">插件管理</button>
         <button class="logout-button" id="logout-button">登出</button> <!-- 新增登出按鈕 -->
         <div class="notification-list-container" id="notification-list-container">
             <div class="notification-list" id="notification-list"></div>
             <button class="load-more-button" id="load-more-button">查看更多</button>
+        </div>
+        <div class="plugin-container" id="plugin-container">
+            <h3>插件管理</h3>
+            <div id="user-plugins" class="plugin-list-container">
+            </div>
+            <div id="available-plugins" class="plugin-list-container">
+            </div>
         </div>
     </div>
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
@@ -143,11 +189,20 @@
                 const notificationListContainer = document.getElementById('notification-list-container');
                 const refreshButton = document.getElementById('refresh-button');
                 const loadMoreButton = document.getElementById('load-more-button');
+                const pluginButton = document.getElementById('plugin-button');
+                const pluginContainer = document.getElementById('plugin-container');
+                const availablePluginsElement = document.getElementById('available-plugins');
+                const userPluginsElement = document.getElementById('user-plugins');
                 const logoutButton = document.getElementById('logout-button'); // 新增登出按鈕
+                const jobListContainer = document.getElementById('job-list-container');
+
 
 
                 let notifications = [];
                 let displayedCount = 0;
+                let plugins = [];
+                let userPlugins = [];
+                let isJobPluginEnabled =false
                 const limit = 5; // 每次顯示的數量
 
                 const socket = io({
@@ -168,37 +223,59 @@
                 function displayNotifications() {
                     notificationListElement.innerHTML = '';
                     // const notificationsToDisplay = notifications.slice(0, displayedCount + limit);
-                    const notificationsToDisplay = notifications
-                        .slice(0, displayedCount + limit)
-                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    // console.log(notifications)
-                    notificationsToDisplay.forEach(notification => {
-                        const item = document.createElement('div');
-                        item.className = 'notification-item' + (notification.isRead ? ' read' : '');
-                        item.dataset.id = notification.notification_id;
-                        
-                        const text = document.createElement('div');
-                        text.textContent = notification.text;
-                        
-                        const date = document.createElement('div');
-                        date.className = 'notification-date';
-                        date.textContent = formatDate(notification.createdAt);
-                        
-                        item.appendChild(text);
-                        item.appendChild(date);
-                        
-                        item.addEventListener('click', () => {
-                            //根據sender判斷屬性，來發送api
-                            console.log(notification.sender)
-                            if(notification.sender=="api_routine"){
-                              openJobs(notification.notification_id) 
-                            }
-                            markAsRead(notification.notification_id);
-                            item.classList.add('read');
+                    if (notifications.length === 0) {
+                        // 創建一個提示用戶沒有通知的元素
+                        const noNotifications = document.createElement('div');
+                        noNotifications.className = 'no-notifications';
+                        noNotifications.textContent = '沒有更多消息';
+                        notificationListElement.appendChild(noNotifications);
+                    } else {
+                        const notificationsToDisplay = notifications
+                            .slice(0, displayedCount + limit)
+                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        // console.log(notifications)
+                        notificationsToDisplay.forEach(notification => {
+                            const item = document.createElement('div');
+                            item.className = 'notification-item' + (notification.isRead ? ' read' : '');
+                            item.dataset.id = notification.notification_id;
+                            
+                            const text = document.createElement('div');
+                            text.textContent = notification.text;
+                            
+                            const date = document.createElement('div');
+                            date.className = 'notification-date';
+                            date.textContent = formatDate(notification.createdAt);
+                            
+                            item.appendChild(text);
+                            item.appendChild(date);
+                            
+                            item.addEventListener('click', () => {
+                                //根據sender判斷屬性，來發送api
+                                isJobPluginEnabled=checkJobPlugin()
+                                // console.log(isJobPluginEnabled)
+                                // console.log(notification.sender)
+                                if(notification.sender=="Job_Pub"&&notification.type=="routine"){
+                                    if (isJobPluginEnabled) {
+                                        openJobs(notification.notification_id);
+                                    } else {
+                                        alert("Job plugin is not enabled.");
+                                    }
+                                }
+                                if(notification.sender=="Job_Pub"&&(notification.type=="job_id_channel"||notification.type=="company_name_channel")){
+                                    // console.log(isJobPluginEnabled)
+                                    if (isJobPluginEnabled) {
+                                        openJobInfo(notification.notification_id);
+                                    } else {
+                                        alert("Job plugin is not enabled.");
+                                    }
+                                }
+                                markAsRead(notification.notification_id);
+                                item.classList.add('read');
+                            });
+                            
+                            notificationListElement.appendChild(item);
                         });
-                        
-                        notificationListElement.appendChild(item);
-                    });
+                    }
                     loadMoreButton.style.display = notifications.length > displayedCount + limit ? 'block' : 'none';
                 }
 
@@ -220,6 +297,129 @@
                     .catch(error => console.error('獲取通知數量時發生錯誤:', error));
                 }
 
+                function displayPlugins() {
+                    // 如果 userPlugins 或 plugins 未定義，給它們賦一個默認值
+                    userPlugins = userPlugins || [];
+                    plugins = plugins || [];
+
+                    userPluginsElement.innerHTML = '';
+                    availablePluginsElement.innerHTML = '';
+
+                    // 從 plugins 中過濾掉已經在 userPlugins 中的插件
+                    const userPluginIds = new Set(userPlugins.map(plugin => plugin.plugin_id));
+                    const availablePluginsFiltered = plugins.filter(plugin => !userPluginIds.has(plugin.plugin_id));
+
+                    // 創建並添加「小標題」區域
+                    const userTitle = document.createElement('h4');
+                    userTitle.textContent = '已用插件';
+                    userPluginsElement.appendChild(userTitle);
+
+                    const availableTitle = document.createElement('h4');
+                    availableTitle.textContent = '可用插件';
+                    availablePluginsElement.appendChild(availableTitle);
+
+                    // 顯示用戶插件
+                    userPlugins.forEach(plugin => {
+                        const pluginItem = document.createElement('div');
+                        pluginItem.className = 'plugin-item';
+                        pluginItem.innerHTML = `<strong>${plugin.plugin_name}</strong>`;
+
+                        const removeButton = document.createElement('button');
+                        removeButton.className = 'plugin-action-button remove';
+                        removeButton.textContent = '移除';
+                        removeButton.onclick = () => removePlugin(plugin.plugin_id);
+
+                        pluginItem.appendChild(removeButton);
+                        userPluginsElement.appendChild(pluginItem);
+                    });
+
+                    // 顯示可用插件
+                    availablePluginsFiltered.forEach(plugin => {
+                        const pluginItem = document.createElement('div');
+                        pluginItem.className = 'plugin-item';
+                        pluginItem.innerHTML = `<strong>${plugin.plugin_name}</strong>`;
+
+                        const addButton = document.createElement('button');
+                        addButton.className = 'plugin-action-button add';
+                        addButton.textContent = '添加';
+                        addButton.onclick = () => addPlugin(plugin.plugin_id);
+
+                        pluginItem.appendChild(addButton);
+                        availablePluginsElement.appendChild(pluginItem);
+                    });
+                }
+
+
+
+                function addPlugin(plugin_id) {
+                    fetch(`/plugins/${plugin_id}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(response => response.json())
+                      .then(data => {
+                          if (data.success) {//修正
+                            //   console.log(data)
+                              userPlugins.push(data.plugin);
+                              displayPlugins();
+                          }
+                      });
+                    jobListContainer.style.display = 'block'; // 隱藏職位資訊容器
+                }
+
+                function removePlugin(plugin_id) {
+                    // console.log(plugin_id)
+                    fetch(`/plugins/${plugin_id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(response => response.json())
+                      .then(data => {
+                          if (data.success) {//修正
+                              userPlugins = userPlugins.filter(plugin => plugin.plugin_id !== plugin_id);
+                              console.log(userPlugins)
+                              displayPlugins();
+                          }
+                      });
+                      jobListContainer.style.display = 'none'; // 隱藏職位資訊容器
+                }
+
+                function fetchPlugins() {
+                    fetch('/system/plugins', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(response => response.json())
+                      .then(data => {
+                          plugins = data.plugins;
+                        //   userPlugins = data.userPlugins;
+                          displayPlugins();
+                      });
+                }
+
+                function fetchUserPlugins() {
+                    fetch('/plugins', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(response => response.json())
+                      .then(data => {
+                         userPlugins = data.plugins;
+                        displayPlugins();
+                      });
+                }
+                pluginButton.addEventListener('click', () => {
+                    pluginContainer.style.display = pluginContainer.style.display === 'none' ? 'block' : 'none';
+                });
+
                 async function openJobs(notificationId) {
                     // 查找通知對象
                     const notification = notifications.find(n => n.notification_id === notificationId);
@@ -229,6 +429,7 @@
                         console.log("link");
                         const url = notification.link.url;
                         const data = notification.link.data || {};
+                        const authToken=notification.link.authToken
                         console.log(url);
                         console.log(data);
 
@@ -238,7 +439,7 @@
                             headers: {
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({data})
+                            body: JSON.stringify({authToken,data})
                         })
                         .then(response => response.json())
                         .then(data => {
@@ -328,10 +529,93 @@
                 }
 
 
+                async function openJobInfo(notificationId) {
+                    const notification = notifications.find(n => n.notification_id === notificationId);
+                    const job = notification.link.data.data//命名可能要改過
+                    console.log(job); // 修正變數名
+
+                    const jobListElement = document.getElementById('job-list');
+                    jobListElement.innerHTML = '';
+
+                    const jobItem = document.createElement('div');
+                    jobItem.className = 'job-item';
+
+                    const title = document.createElement('a');
+                    title.className = 'job-title';
+                    title.textContent = job.job_title;
+                    title.href = job.job_link;
+                    title.target = '_blank'; // 讓鏈接在新窗口打開
+                    const subscribeButtonTitle = document.createElement('button');
+                    subscribeButtonTitle.className = 'subscribe-button';
+                    subscribeButtonTitle.textContent = '訂閱職缺';
+                    subscribeButtonTitle.addEventListener('click', async() => {
+                        const job_ids=[job.job_id]
+                        console.log(job.job_id)
+                        const company_names=[]
+                        await subscribeToJob(job_ids,company_names);
+                        await openJobs(notification.notification_id) 
+                    });
+
+                    jobItem.appendChild(title);
+                    jobItem.appendChild(subscribeButtonTitle);
+
+                    // 公司名稱
+                    const company = document.createElement('div');
+                    company.className = 'job-company';
+                    company.textContent = job.company_name;
+
+                    const subscribeButtonCompany = document.createElement('button');
+                    subscribeButtonCompany.className = 'subscribe-button';
+                    subscribeButtonCompany.textContent = '訂閱公司';
+                    subscribeButtonCompany.addEventListener('click', async() => {
+                        const company_names=[job.company_name]
+                        const job_ids = []; // 或者設置你希望的默認值
+                        await subscribeToJob(job_ids,company_names);
+                        await openJobs(notificationId) 
+                    });
+
+                    company.appendChild(subscribeButtonCompany);
+                    jobItem.appendChild(company);
+                    
+
+                    // 職位描述
+                    const desc = document.createElement('div');
+                    desc.className = 'job-desc';
+                    const truncatedDesc = job.job_desc.length > 100 ? job.job_desc.substring(0, 100) + '...' : job.job_desc;
+                    desc.textContent = truncatedDesc;
+
+                    // 更新日期
+                    const updateDate = document.createElement('div');
+                    updateDate.className = 'job-date';
+                    updateDate.textContent = `更新日期: ${formatDate(job.update_date)}`;
+
+                    // 來源
+                    const source = document.createElement('div');
+                    source.className = 'job-source';
+                    source.textContent = `來源: ${job.source}`;
+
+                    // 職位資訊
+                    const jobInfo = document.createElement('div');
+                    jobInfo.className = 'job-info';
+                    jobInfo.textContent = `職位資訊: ${job.job_info}`;
+
+                    // 將所有內容加入 jobItem
+                    jobItem.appendChild(company);
+                    jobItem.appendChild(desc);
+                    jobItem.appendChild(updateDate);
+                    jobItem.appendChild(source);
+                    jobItem.appendChild(jobInfo);
+
+                    // 將 jobItem 加入 jobListElement
+                    jobListElement.appendChild(jobItem);
+            
+                }
+
                 async function subscribeToJob(job_ids, company_names) {
                     // 發送訂閱請求(第三方api)
-                    fetch('http://localhost:4000/api/id_subscriptions', {//（由前端發送可能不太好，外掛ID會洩漏）
-                        method: 'PATCH',
+                    const plugin_id ='6ed30a64-00e8-48cd-a84f-c42bf7f2fcbe' //有需要這樣解耦嗎？
+                    fetch(`/plugins/${plugin_id}/instant_sub`, {//（由前端發送可能不太好，外掛ID會洩漏）
+                        method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${token}`
@@ -339,7 +623,6 @@
                         body: JSON.stringify({ 
                             "type": 1,
                             "data": {
-                                "user_id": "0ce32985-7fda-4c20-ad62-3ac0a9b23233",//之後再改(前端目前可能不知道user_id)所以要在登入時存起來嗎
                                 "sub": {
                                     "job_ids": job_ids, // Include job IDs here
                                     "company_names": company_names // Include company names here
@@ -360,7 +643,7 @@
 
                     // 如果通知不存在或已讀，則不發起 API 請求
                     if (!notification || notification.isRead) {
-                        return;
+                        return ;
                     }
 
                     fetch(`/notifications/${notificationId}`, {
@@ -374,14 +657,14 @@
                     .then(response => response.json())
                     .then(data => {
                         console.log('通知已更新:', data);
-                        // 更新本地通知列表中的状态
+                        // 更新本地通知列表中的狀態
                         notification.isRead = true;
                     })
                     .catch(error => console.error('更新通知狀態時發生錯誤:', error));
                 }
 
                 refreshButton.addEventListener('click', () => {
-                    console.log('Current display state:', notificationListContainer.style.display);
+                    // console.log('Current display state:', notificationListContainer.style.display);
                     if (notificationListContainer.style.display === 'none' || notificationListContainer.style.display === '') {
                         notificationListContainer.style.display = 'block';
                         fetchNotifications();
@@ -439,8 +722,16 @@
                     .catch(error => console.error('獲取通知數量時發生錯誤:', error));
                 }
 
+                function checkJobPlugin() {
+                    // 檢查插件狀態
+                    const isJobPluginEnabled = userPlugins.some(plugin => plugin.plugin_name === 'Job_Sub_Pub'); //如何與id有所連結？讓系統方便代理請求
+                    return isJobPluginEnabled
+                }
+
                 // 初次加載時獲取通知數量
                 fetchNotificationCount();
+                fetchPlugins();
+                fetchUserPlugins();
             }
         });
     </script>

@@ -7,6 +7,7 @@ const notificationSchema = new mongoose.Schema({
   },
   text: { type: String, required: true },
   sender: { type: String, required: true }, // 寄件者 （需要多加一個type嗎）
+  type: { type: String },
   receiver: { type: String, required: true }, // 接收者
   createdAt: {
     type: Date,
@@ -18,6 +19,7 @@ const notificationSchema = new mongoose.Schema({
       type: Map,
       default: {},
     },
+    authToken: { type: String },
   },
   isRead: {
     type: Boolean,
@@ -26,7 +28,7 @@ const notificationSchema = new mongoose.Schema({
 }, {
   toJSON: {
     transform(doc, ret) {
-      const { _id, ...rest } = ret;
+      const { _id, receiver, ...rest } = ret; // 機密內容
       const newRet = { notification_id: _id, ...rest };
       return newRet;
     },

@@ -1,5 +1,5 @@
 const mqtt = require('mqtt');
-const { addjobNotifications, addfastNotifications } = require('../services/api');
+const { addjobNotifications, addfastNotifications } = require('../services/notifAsync');
 
 const setupMqttClient = (notifService, notificationRepository, io) => {
 // MQTT 伺服器配置
@@ -48,7 +48,7 @@ const setupMqttClient = (notifService, notificationRepository, io) => {
   // 處理接收到的消息，就生成簡單消息並更新通知數量
   mqttClient.on('message', async (topic, message) => {
     if (topic === MQTT_TOPIC) {
-    // console.log(`Received message on topic '${MQTT_TOPIC}':`, message.toString());
+      // console.log(`Received message on topic '${MQTT_TOPIC}':`, message.toString());
       const messageObject = JSON.parse(message.toString());
       const sender = 'Job_Pub';
       const type = 'routine';
@@ -60,7 +60,7 @@ const setupMqttClient = (notifService, notificationRepository, io) => {
       }
     }
     if (topic === MQTT_JOB) {
-    // console.log(`Received message on topic '${MQTT_JOB}':`, message.toString());
+      // console.log(`Received message on topic '${MQTT_JOB}':`, message.toString());
       const messageObject = JSON.parse(message.toString());
       const sender = 'Job_Pub';// plugin_name?
       const type = MQTT_JOB;// api種類
@@ -72,7 +72,7 @@ const setupMqttClient = (notifService, notificationRepository, io) => {
       }
     }
     if (topic === MQTT_COMPANY) {
-    // console.log(`Received message on topic '${MQTT_COMPANY}':`, message.toString());
+      // console.log(`Received message on topic '${MQTT_COMPANY}':`, message.toString());
       const messageObject = JSON.parse(message.toString());
       const sender = 'Job_Pub';
       const type = MQTT_COMPANY;

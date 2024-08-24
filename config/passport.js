@@ -13,7 +13,9 @@ opts.secretOrKey = process.env.PASSPORT_SECRET;
 passport.use(
   new JwtStrategy(opts, (async (jwt_payload, done) => {
     try {
-      const foundUser = await User.findUserById(jwt_payload.user_id);
+      // console.log(jwt_payload.user_id);
+      // const foundUser = await User.findUserById(jwt_payload.user_id);
+      const foundUser = await User.findUserByPublicId(jwt_payload.user_id);
       if (foundUser) {
         return done(null, foundUser); // req.user <= foundUser
       }
