@@ -5,7 +5,7 @@ const User = require('../models/user'); // 引入 Plugin 模型
 
 const sendRequest = async (user_id, plugin_id, apiType, type, data) => {
   try {
-    // 從資料庫中找到對應的插件
+  // 從資料庫中找到對應的插件
     const { userPlugin } = await UserPlugin.findPluginById(user_id, plugin_id);
 
     const plugin = await Plugin.findOne({ _id: plugin_id });// api算機密
@@ -21,7 +21,6 @@ const sendRequest = async (user_id, plugin_id, apiType, type, data) => {
     }
 
     console.log(apiUrl);// 目前查不用user_id
-    console.log(data);
     // 使用 axios 發送 HTTP 請求
 
     // pg_api要增加type[enum]
@@ -29,7 +28,14 @@ const sendRequest = async (user_id, plugin_id, apiType, type, data) => {
     // 驗證之後再寫
 
     const public_id = await User.findPublicIdByUserId(user_id);
-    const response = await axios.post(apiUrl, { type, user_id: public_id, data });// 404 error因為沒有user_id
+    let response;
+
+    // axios get 不能有req body
+    if (apiType === 'subInfo' || apiType === 'jobSubInfo') {
+      response = await axios.get(`${apiUrl}/${public_id}`);// 404 error因為沒有user_id
+      return response.data;
+    }
+    response = await axios.post(apiUrl, { type, user_id: public_id, data });// 404 error因為沒有user_id
     console.log(response.data);
     // 返回請求結果
     return response.data;

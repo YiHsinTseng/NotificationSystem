@@ -1,0 +1,103 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  height: 100vh;
+}
+.notification-container {
+  width: 300px;
+  flex: 1; /* 讓通知容器彈性地佔用剩餘空間 */
+  margin-top: 25px;
+  padding: 10px;
+}
+.side-bar-container {
+  width: 600px;
+  flex: 1; /* 讓職位資訊容器佔用更多空間 */
+  padding: 10px;
+  margin-left: 15px;
+}
+.notification-count {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+.notification-count::after {
+  content: ' 筆通知';
+  font-size: 16px; /* 根據需要調整字體大小 */
+  color: #333; /* 根據需要調整顏色 */
+}
+.refresh-button, .plugin-button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.notification-list-container, .plugin-container {
+  display: none; /* 初始隱藏 */
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: #fff;
+}
+.notification-item, .plugin-item {
+  margin-bottom: 10px;
+  padding: 5px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+.notification-item.read {
+  background-color: #f0f0f0; /* 已读通知背景色 */
+}
+.notification-date {
+  font-size: 12px;
+  color: #888;
+}
+.load-more-button, .plugin-load-more-button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.plugin-button {
+  margin-top: 10px;
+  background-color: #28a745;
+  color: #fff;
+}
+.plugin-button:hover {
+  background-color: #218838;
+}
+
+.plugin-list-container {
+  display: block;
+}
+.plugin-item {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+.plugin-action-button {
+  margin-top: 5px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.plugin-action-button.add {
+  background-color: #007bff;
+  color: #fff;
+}
+.plugin-action-button.remove {
+  background-color: #dc3545;
+  color: #fff;
+}
+.plugin-action-button.add:hover {
+  background-color: #0056b3;
+}
+.plugin-action-button.remove:hover {
+  background-color: #c82333;
+}
