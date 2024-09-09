@@ -20,6 +20,12 @@ const port = process.env.PORT;// 5050;
 
 const { notificationRepository } = initializeServices();
 
+// 加入週期性任務
+const { scheduleJobs } = require('./src/services/scheduleJobs');
+
+const { CRON_SCHEDULE } = process.env;
+scheduleJobs(notificationRepository, CRON_SCHEDULE);
+
 const io = setupSocketIo(server, notifService, notificationRepository);
 setupMqttClient(notifService, notificationRepository, io);
 

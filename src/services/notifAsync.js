@@ -1,5 +1,6 @@
 // const model = require('../services/notif');
 const User = require('../models/user');
+const { getDaysAgoInTimeZone } = require('../utils/dateUtils');
 
 const getNotificationsCount = async (notificationRepository, user_id) => {
   try {
@@ -100,6 +101,19 @@ const patchNotification = async (notificationRepository, user_id, notification_i
     throw new Error('業務邏輯處理錯誤');
   }
 };
+
+const deleteOldNotifications = async (notificationRepository, user_id, daysAgo = 3) => {
+  try {
+    const delDay = getDaysAgoInTimeZone(daysAgo);
+    // console.log(delDay);
+    await notificationRepository.deleteOldNotifications(user_id, delDay);
+    // console.log(`已成功刪除${daysAgo}天前的通知`);
+  } catch (error) {
+    console.error('刪除通知時發生錯誤:', error.message || error);
+    throw new Error('刪除通知失敗');
+  }
+};
+
 module.exports = {
   getNotificationsCount,
   addNotifications,
@@ -107,4 +121,5 @@ module.exports = {
   addfastNotifications,
   getNotifications,
   patchNotification,
+  deleteOldNotifications,
 };

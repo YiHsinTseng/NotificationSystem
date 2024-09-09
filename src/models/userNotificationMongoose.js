@@ -18,6 +18,21 @@ const UserNotificationSchema = new mongoose.Schema({
   },
 });
 
+UserNotificationSchema.statics.getAllUserIds = async function getAllUserIds() {
+  try {
+    // 查詢所有文檔，只返回 _id 欄位
+    const userNotifications = await this.find({}, '_id').exec();
+
+    // 提取 user_id (即 _id)
+    const userIds = userNotifications.map((userNotification) => userNotification._id);
+
+    return userIds;
+  } catch (error) {
+    console.error('獲取所有用戶 ID 時發生錯誤:', error.message || error);
+    throw error; // 或根據需要處理錯誤
+  }
+};
+
 UserNotificationSchema.statics.findById = async function findById(user_id) {
   const userNotification = await this.findOne({ _id: user_id }).exec();
   // console.log(userNotification);
@@ -88,6 +103,21 @@ UserNotificationSchema.methods.createNotification = async function createNotific
   await userNotification.save();
 
   return { success: true, message: 'Notification created successfully' };
+};
+
+// 假設 this.storage 是 UserNotification 模型
+UserNotificationSchema.methods.deleteOldNotifications = async function deleteOldNotifications(user_id, delDay) {
+  // 找到指定用戶並刪除三天前的通知
+  const userNotification = await this.model('UserNotification').findOne({ _id: user_id });
+
+  if (userNotification) {
+    userNotification.notifications = userNotification.notifications.filter((notification) => notification.createdAt >= delDay);
+
+    // 保存更新後的文檔
+    await userNotification.save();
+  } else {
+    console.error('User not found');
+  }
 };
 
 const UserNotification = mongoose.model('UserNotification', UserNotificationSchema);

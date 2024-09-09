@@ -49,6 +49,14 @@ class NotificationAsyncRepository {
   async patchNotification(user_id, notification_id, isRead) {
     await this.storage.patchNotification(user_id, notification_id, isRead);
   }
+
+  async deleteOldNotifications(user_id, delDay) {
+    try {
+      await this.storage.deleteOldNotifications(user_id, delDay);
+    } catch (error) {
+      console.error('Error deleting old notifications:', error.message || error);
+    }
+  }
 }
 
 module.exports = { NotificationRepository, NotificationAsyncRepository };

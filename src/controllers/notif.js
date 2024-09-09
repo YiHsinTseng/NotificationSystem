@@ -55,6 +55,18 @@ const patchNotification = async (req, res, next) => {
   }
 };
 
+const cleanUpOldNotifications = async (req, res, next) => {
+  try {
+    const notificationRepository = req.app.get('notificationRepository');
+    // const io = req.app.get('io');
+    const { user_id } = req.user;
+    await notifSerivce.deleteOldNotifications(notificationRepository, user_id);
+    res.status(200).json({ message: 'Old notification clean up successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // sub notif
 // 提供自己的id以及訂閱條件給訂閱服務器，讓服務器透過爬取的資料推播回主通知系統
 
@@ -65,4 +77,5 @@ module.exports = {
   getNotification,
   addNotification,
   patchNotification,
+  cleanUpOldNotifications,
 };
