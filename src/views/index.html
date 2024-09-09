@@ -34,11 +34,26 @@
             <div class="notification-list" id="notification-list"></div>
             <button class="load-more-button" id="load-more-button">查看更多</button>
         </div>
-        <div class="plugin-container" id="plugin-container">
+        <div class="plugin-container" id="plugin-container" style="display: none;">
             <h3>插件管理</h3>
             <div id="user-plugins" class="plugin-list-container">
             </div>
             <div id="available-plugins" class="plugin-list-container">
+            </div>
+            <div class="plugin-admin-container" id="plugin-admin-container" style="display: none;">
+                <h3>插件添加(管理員)</h3>
+                <form id="pluginForm">
+                    <label for="plugin_name">Plugin Name:</label>
+                    <input type="text" id="plugin_name" name="plugin_name" placeholder="Enter plugin name" required>
+            
+                    <label for="plugin_apis">Plugin APIs (JSON):</label>
+                    <textarea id="plugin_apis" name="plugin_apis" placeholder='{"routine_sub": "http://example.com"}' rows="8" required></textarea>
+                    <div id="errorMessage" class="error"></div>
+            
+                    <button type="submit">Submit</button>
+                </form>
+            
+                <div id="responseMessage" class="success"></div>
             </div>
         </div>
     </div>

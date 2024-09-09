@@ -32,7 +32,7 @@ const login = async (req, res, next) => {
   try {
     // 確認信箱是否被註冊過
     const foundUser = await User.findUserByEmail(req.body.email);
-
+    const isAdmin = (foundUser.email === 'admin123@gmail.com');
     if (!foundUser) {
       throw new AppError(res, 401, 'Unable to find user. Please confirm if the email is correct');
     }
@@ -46,6 +46,7 @@ const login = async (req, res, next) => {
         message: 'User signed in successfully',
         token,
         redirectTo: '/index.html', // 添加重定向訊息
+        isAdmin,
       });
       return result;
     }

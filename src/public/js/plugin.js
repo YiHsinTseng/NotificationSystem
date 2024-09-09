@@ -1,19 +1,34 @@
-const pluginButton = document.getElementById('plugin-button');
-const pluginContainer = document.getElementById('plugin-container');
-const availablePluginsElement = document.getElementById('available-plugins');
-const userPluginsElement = document.getElementById('user-plugins');
-
-const jobPluginContainer = document.getElementById('job-plugin-container');
-
-const jobPluginName = 'Job_Sub_Pub'; // TODO 有需要這樣解耦嗎？
-
-let plugins = [];
-let userPlugins = []; // 要共用要擺對位置?併發會不會有問題
-let isJobPluginEnabled = false;
+let instance;
 
 export default function initializePlugin(token) {
 // 插件模組
+  if (instance) {
+    return instance; // 返回已經初始化過的實例
+  }
 
+  const pluginButton = document.getElementById('plugin-button');
+  const pluginContainer = document.getElementById('plugin-container');
+  const availablePluginsElement = document.getElementById('available-plugins');
+  const userPluginsElement = document.getElementById('user-plugins');
+
+  const pluginAdminContainer = document.getElementById('plugin-admin-container');
+  const addPluginForm = document.getElementById('pluginForm');
+  const pluginNameInput = document.getElementById('plugin_name');
+  const pluginApisInput = document.getElementById('plugin_apis');
+  const errorMessage = document.getElementById('errorMessage');
+  const responseMessage = document.getElementById('responseMessage');
+
+  const jobPluginContainer = document.getElementById('job-plugin-container');
+  const jobPluginName = 'Job_Sub_Pub'; // TODO 有需要這樣解耦嗎？
+
+  let plugins = [];
+  let userPlugins = []; // 要共用要擺對位置?併發會不會有問題
+  let isJobPluginEnabled = false;
+
+  const isAdmin = localStorage.getItem('isAdmin') === 'true'; // localstorage存字串
+  if (isAdmin) {
+    pluginAdminContainer.style.display = 'block';
+  }
   function displayPlugins() {
     // 如果 userPlugins 或 plugins 未定義，給它們賦一個默認值
     userPlugins = userPlugins || [];
@@ -135,13 +150,56 @@ export default function initializePlugin(token) {
     pluginContainer.style.display = pluginContainer.style.display === 'none' ? 'block' : 'none';
   });
 
+  addPluginForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    errorMessage.textContent = ''; // Clear previous error
+    responseMessage.textContent = ''; // Clear previous success message
+
+    const pluginName = pluginNameInput.value.trim();
+    const pluginApis = pluginApisInput.value.trim();
+
+    try {
+      // Validate JSON format
+      const parsedApis = JSON.parse(pluginApis);
+
+      // If JSON is valid, simulate API submission
+      const formData = {
+        plugin_name: pluginName,
+        plugin_apis: parsedApis,
+      };
+
+      fetch('/system/plugins', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      }).then((response) => response.json())
+        .then((data) => {
+          // Display success message
+          responseMessage.textContent = 'API data submitted successfully:';
+          // responseMessage.textContent += `\n${JSON.stringify(formData, null, 2)}`;
+        });
+    } catch (error) {
+      // Display error if JSON is invalid
+      errorMessage.textContent = 'Invalid JSON format in Plugin APIs.';
+    }
+  });
+
   function checkJobPlugin() {
   // 檢查插件狀態
     isJobPluginEnabled = userPlugins.some((plugin) => plugin.plugin_name === jobPluginName); // 如何與id有所連結？讓系統方便代理請求 //TODO
     console.log(userPlugins);
     return isJobPluginEnabled;
   }
-  return {
+  // return {
+  //   checkJobPlugin, fetchUserPlugins, fetchPlugins,
+  // };
+  instance = {
     checkJobPlugin, fetchUserPlugins, fetchPlugins,
   };
+
+  return instance; // 返回初始化後的實例
 }

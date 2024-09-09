@@ -50,6 +50,10 @@
                         localStorage.setItem('authToken', result.token);
                         console.log(result.token)
                     }
+                    
+                    // 存储 JWT 令牌
+                    localStorage.setItem('isAdmin', result.isAdmin);
+                    console.log(result.isAdmin)
                     if (result.redirectTo) {
                         // 直接跳转到指定页面
                         window.location.href = result.redirectTo;

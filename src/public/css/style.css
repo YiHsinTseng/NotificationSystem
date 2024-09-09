@@ -101,3 +101,16 @@ body {
 .plugin-action-button.remove:hover {
   background-color: #c82333;
 }
+
+label {
+  font-weight: bold;
+  margin-top: 10px;
+  display: block;
+}
+input[type="text"], textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
