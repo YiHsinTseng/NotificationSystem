@@ -1,5 +1,7 @@
 # Notification System
 
+基於 [TabColab](https://github.com/YiHsinTseng/tabcolab-api) 延伸設計之通知系統，藉由外掛功能的添加，用於擴展SideBar以及卡片可涵蓋資訊的可能性。
+
 ## 前置作業
 
 需要搭配Job_Sub_Pub的伺服器開啟使用
@@ -7,6 +9,12 @@
 https://github.com/YiHsinTseng/JobSubPub
 
 啟動後會立刻執行爬蟲（其後是每天9:00定時爬蟲）
+
+## 啟動應用
+
+```
+node server.js
+```
 
 ## 登入帳密(管理員)
 ```
