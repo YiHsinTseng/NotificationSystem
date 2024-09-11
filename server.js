@@ -2,6 +2,7 @@ require('dotenv').config(); // 引入並加載 .env 文件
 require('./config/dbConnect');
 
 const http = require('http');
+const path = require('path');
 const createExpressApp = require('./config/expressConfig');
 const setupRoutes = require('./src/routes/index');
 const apiErrorHandler = require('./src/middlewares/apiErrorHandler');
@@ -28,6 +29,13 @@ scheduleJobs(notificationRepository, CRON_SCHEDULE);
 
 const io = setupSocketIo(server, notifService, notificationRepository);
 setupMqttClient(notifService, notificationRepository, io);
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, './src/views', 'index.html'));
+});
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, './src/views', 'login.html'));
+});
 
 app.set('notificationRepository', notificationRepository);
 app.set('io', io);

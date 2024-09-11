@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('authToken');
 
   if (!token) {
-    window.location.href = '/login.html';
+    window.location.href = '/login';
   } else {
     const logoutButton = document.getElementById('logout-button'); // 新增登出按鈕
 
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 清除 localStorage 中的 token
       localStorage.removeItem('authToken');
       // 重定向到登錄頁面
-      window.location.href = '/login.html';
+      window.location.href = '/login';
     }
 
     logoutButton.addEventListener('click', () => {

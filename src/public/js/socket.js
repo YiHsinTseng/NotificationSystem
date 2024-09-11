@@ -16,7 +16,7 @@ export default function initializeSocket(token) {
   socket.on('connect_error', (err) => {
     if (err.message === 'Authentication error') {
       alert('認證錯誤，請重新登錄');
-      window.location.href = '/login.html';
+      window.location.href = '/login';
     } else {
       console.error('Socket.io 連接錯誤:', err);
     }

@@ -10,6 +10,26 @@ https://github.com/YiHsinTseng/JobSubPub
 
 啟動後會立刻執行爬蟲（其後是每天9:00定時爬蟲）
 
+## 本地安裝並啟動MongoDB
+
+```
+brew tap mongodb/brew
+brew install mongodb-community@5.0
+brew services start mongodb/brew/mongodb-community
+```
+
+## 測試環境變數
+
+```
+PORT=5050
+MONGODB_URI_LOCAL=mongodb://localhost:27017/yourDatabaseName
+SESSION_SECRET=YOURSECRET
+
+PASSPORT_SECRET=YOURSECRET
+MQTT_BROKER_URL=mqtt://localhost:1884 #搭配Job_Sub_Pub 本地測試
+CRON_SCHEDULE='0 4 * * *'
+```
+
 ## 啟動應用
 
 ```

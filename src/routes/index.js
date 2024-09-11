@@ -3,9 +3,9 @@ const notifRoute = require('./notif');
 const pluginRoute = require('./plugin');
 
 function setupRoutes(app) {
-  app.use('/', userRoute);
-  app.use('/notifications', notifRoute);
-  app.use('/', pluginRoute);
+  app.use('/api', userRoute);
+  app.use('/api/notifications', notifRoute);
+  app.use('/api', pluginRoute);
 }
 
 module.exports = setupRoutes;

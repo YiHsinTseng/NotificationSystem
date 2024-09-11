@@ -10,7 +10,7 @@ export default function initializeJobPlugin(token) {
 
   function fetchSubscriptionData() {
     // Fetch current subscription data
-    fetch(`/plugins/${job_plugin_id}/jobSubInfo`, {
+    fetch(`api/plugins/${job_plugin_id}/jobSubInfo`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -41,7 +41,7 @@ export default function initializeJobPlugin(token) {
 
   // 將 fetch 請求包裝成函式，並將結果存入 localStorage
   function fetchJobPluginSubInfo(job_plugin_id, token) {
-    return fetch(`/plugins/${job_plugin_id}/subInfo`, {
+    return fetch(`api/plugins/${job_plugin_id}/subInfo`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ export default function initializeJobPlugin(token) {
       },
     };
 
-    fetch(`/plugins/${job_plugin_id}/routine_sub`, {
+    fetch(`api/plugins/${job_plugin_id}/routine_sub`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -256,7 +256,7 @@ export default function initializeJobPlugin(token) {
   async function subscribeToJob(job_ids, company_names, type) {
     // 發送訂閱請求(第三方api)
     // await fetchJobPluginSubInfo(job_plugin_id,token)
-    await fetch(`/plugins/${job_plugin_id}/instant_sub`, { // （由前端發送可能不太好，外掛ID會洩漏）
+    await fetch(`api/plugins/${job_plugin_id}/instant_sub`, { // （由前端發送可能不太好，外掛ID會洩漏）
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

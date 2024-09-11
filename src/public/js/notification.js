@@ -25,7 +25,7 @@ export default function initializeNotification(token) {
 
   // 獲取通知數量
   function fetchNotificationCount() {
-    fetch('/notifications', {
+    fetch('api/notifications', {
       headers: {
         Authorization: `Bearer ${token}`, // 把 JWT 作為 Authorization header 傳遞
       },
@@ -44,7 +44,7 @@ export default function initializeNotification(token) {
       return;
     }
 
-    fetch(`/notifications/${notificationId}`, {
+    fetch(`api/notifications/${notificationId}`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -121,7 +121,7 @@ export default function initializeNotification(token) {
 
   function fetchNotifications() {
   // 發送自身api（由後端發送）
-    fetch('/notifications', {
+    fetch('api/notifications', {
       headers: {
         Authorization: `Bearer ${token}`,
       },

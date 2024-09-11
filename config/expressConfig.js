@@ -6,7 +6,6 @@ function createExpressApp() {
 
   app.use(express.json());
   app.use(express.static(path.join(__dirname, '../src/public')));
-  app.use(express.static(path.join(__dirname, '../src/views')));
   return app;
 }
 

@@ -1,9 +1,10 @@
 let instance;
+// ES6 模塊自帶作用域隔離，每個模塊都是獨立的，無需擔心變數覆蓋的問題。
 
 export default function initializePlugin(token) {
 // 插件模組
   if (instance) {
-    return instance; // 返回已經初始化過的實例
+    return instance; // 返回已經初始化過的實例，不會有後續處理
   }
 
   const pluginButton = document.getElementById('plugin-button');
@@ -66,7 +67,7 @@ export default function initializePlugin(token) {
     });
 
     function addPlugin(plugin_id) {
-      fetch(`/plugins/${plugin_id}`, {
+      fetch(`api/plugins/${plugin_id}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -85,7 +86,7 @@ export default function initializePlugin(token) {
 
     function removePlugin(plugin_id) {
       // console.log(plugin_id)
-      fetch(`/plugins/${plugin_id}`, {
+      fetch(`api/plugins/${plugin_id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -119,7 +120,7 @@ export default function initializePlugin(token) {
   }
 
   function fetchPlugins() {
-    fetch('/system/plugins', {
+    fetch('api/system/plugins', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -134,7 +135,7 @@ export default function initializePlugin(token) {
   }
 
   function fetchUserPlugins() {
-    fetch('/plugins', {
+    fetch('api/plugins', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -169,7 +170,7 @@ export default function initializePlugin(token) {
         plugin_apis: parsedApis,
       };
 
-      fetch('/system/plugins', {
+      fetch('api/system/plugins', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

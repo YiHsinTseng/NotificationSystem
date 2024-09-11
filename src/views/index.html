@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>通知系統</title>
+    <!-- 放前面先載入 ，會覆蓋所以避免撞名-->
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/job.css">
 </head>
 <body>
     <div class="side-bar-container" id="side-bar-container">
@@ -57,9 +60,8 @@
             </div>
         </div>
     </div>
-    <link rel="stylesheet" href="./css/style.css">
-    <link rel="stylesheet" href="./css/job.css">
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script type="module" src="./js/main.js"></script>
+    <!-- 避免全域撞名 IIFE -->
 </body>
 </html>

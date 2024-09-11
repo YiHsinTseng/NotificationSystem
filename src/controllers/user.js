@@ -45,7 +45,6 @@ const login = async (req, res, next) => {
         status: 'success',
         message: 'User signed in successfully',
         token,
-        redirectTo: '/index.html', // 添加重定向訊息
         isAdmin,
       });
       return result;

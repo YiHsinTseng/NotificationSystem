@@ -34,7 +34,7 @@
             event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const endpoint = isLogin ? '/users/login' : '/users/register';
+            const endpoint = isLogin ? '/api/users/login' : '/api/users/register';
 
             try {
                 const response = await fetch(endpoint, {
@@ -49,15 +49,10 @@
                         // 存储 JWT 令牌
                         localStorage.setItem('authToken', result.token);
                         console.log(result.token)
+                        localStorage.setItem('isAdmin', result.isAdmin);
+                        window.location.href = "/";
                     }
-                    
-                    // 存储 JWT 令牌
-                    localStorage.setItem('isAdmin', result.isAdmin);
-                    console.log(result.isAdmin)
-                    if (result.redirectTo) {
-                        // 直接跳转到指定页面
-                        window.location.href = result.redirectTo;
-                    } else {
+                    else {
                         alert(result.message);
                     }
                 } else {
