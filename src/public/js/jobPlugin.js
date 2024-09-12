@@ -1,9 +1,8 @@
 import formatDate from './dateUtils.js';
 
-export default function initializeJobPlugin(token) {
+export default function initializeJobPlugin(token, job_plugin_id) {
   // JOB 訂閱模組
-  const job_plugin_id = '7ab0c877-6126-4c12-9587-2b32cb0d9f6d'; // TODO 有需要這樣解耦嗎？
-
+  const jobPluginContainer = document.getElementById('job-plugin-container');
   const toggleSubscribeFormButton = document.getElementById('toggle-subscribe-form');
   const subscribeForm = document.getElementById('subscribe-form');
   subscribeForm.style.display = 'none';
@@ -361,6 +360,6 @@ export default function initializeJobPlugin(token) {
   }
 
   return {
-    openJobInfo, openJobs,
+    openJobInfo, openJobs, pluginSideBarContainer: jobPluginContainer,
   };
 }

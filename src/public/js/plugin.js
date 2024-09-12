@@ -21,15 +21,16 @@ export default function initializePlugin(token) {
   const errorMessage = document.getElementById('errorMessage');
   const responseMessage = document.getElementById('responseMessage');
 
-  const jobPluginContainer = document.getElementById('job-plugin-container');
-  const jobPluginName = 'Job_Sub_Pub'; // TODO 有需要這樣解耦嗎？
-
   let plugins = [];
   let userPlugins = []; // 要共用要擺對位置?併發會不會有問題
-  let isJobPluginEnabled = false;
 
-  const { openJobs, openJobInfo } = initializeJobPlugin(token);
+  // TODO 有需要這樣解耦嗎？
+  // 讓每個plugin都有對應相同函式，然後迭代
+  const jobPluginName = 'Job_Sub_Pub';
+  const job_plugin_id = '7ab0c877-6126-4c12-9587-2b32cb0d9f6d';
 
+  const { openJobs, openJobInfo, pluginSideBarContainer } = initializeJobPlugin(token, job_plugin_id);
+  //
   const isAdmin = localStorage.getItem('isAdmin') === 'true'; // localstorage存字串
   if (isAdmin) {
     pluginAdminContainer.style.display = 'block';
@@ -86,7 +87,10 @@ export default function initializePlugin(token) {
             displayPlugins();
           }
         });
-      jobPluginContainer.style.display = 'block'; // 隱藏職位資訊容器
+      // jobPluginContainer.style.display = 'block'; // 顯示職位資訊容器
+      // initializeJobPlugin(token, job_plugin_id).pluginSideBarContainer.style.display = 'block'; // 顯示職位資訊容器
+      initializeJobPlugin(token, job_plugin_id).pluginSideBarContainer.style.display = 'flex'; // 顯示職位資訊容器
+      // 再次顯示大小會改變？
     }
 
     function removePlugin(plugin_id) {
@@ -105,7 +109,8 @@ export default function initializePlugin(token) {
             displayPlugins();
           }
         });
-      jobPluginContainer.style.display = 'none'; // 隱藏職位資訊容器
+      // jobPluginContainer.style.display = 'none'; // 隱藏職位資訊容器
+      initializeJobPlugin(token, job_plugin_id).pluginSideBarContainer.style.display = 'none'; // 隱藏職位資訊容器
     }
 
     // 顯示可用插件
@@ -195,6 +200,7 @@ export default function initializePlugin(token) {
   });
 
   async function handleNotification(notifications, notification) {
+    let isJobPluginEnabled = false;
     // 其中一個關於job_plugin的判斷（要插分成查表、加載js、）
     function checkJobPlugin() {
       // 檢查插件狀態
