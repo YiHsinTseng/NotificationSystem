@@ -1,6 +1,6 @@
 import initializeSocket from './socket.js';
 import initializePlugin from './plugin.js';
-import initializeJobPlugin from './jobPlugin.js';
+
 import formatDate from './dateUtils.js';
 
 export default function initializeNotification(token) {
@@ -15,8 +15,8 @@ export default function initializeNotification(token) {
   const limit = 5; // 每次顯示的數量
 
   const socket = initializeSocket(token);
-  const { checkJobPlugin } = initializePlugin(token);
-  const { openJobs, openJobInfo } = initializeJobPlugin(token);
+  const { handleNotification } = initializePlugin(token);
+  // const { openJobs, openJobInfo } = initializeJobPlugin(token);
 
   // 主要通知模組
   function updateView(count) {
@@ -91,24 +91,7 @@ export default function initializeNotification(token) {
         item.appendChild(date);
 
         item.addEventListener('click', async () => {
-        // 根據sender判斷屬性，來發送api
-          const isJobPluginEnabled = checkJobPlugin();
-          // console.log(notification.sender)
-          if (notification.sender === 'Job_Pub' && notification.type === 'routine') {
-            if (isJobPluginEnabled) {
-              await openJobs(notifications, notification.notification_id);
-            } else {
-              alert('Job plugin is not enabled.');
-            }
-          }
-          if (notification.sender === 'Job_Pub' && (notification.type === 'job_id_channel' || notification.type === 'company_name_channel')) {
-          // console.log(isJobPluginEnabled)
-            if (isJobPluginEnabled) {
-              await openJobInfo(notifications, notification.notification_id);
-            } else {
-              alert('Job plugin is not enabled.');
-            }
-          }
+          handleNotification(notifications, notification);
           markAsRead(notification.notification_id);
           item.classList.add('read');
         });
@@ -138,6 +121,7 @@ export default function initializeNotification(token) {
       .catch((error) => console.error('獲取通知數量時發生錯誤:', error));
   }
 
+  // 添加監聽器
   loadMoreButton.addEventListener('click', () => {
     displayedCount += limit;
     displayNotifications();

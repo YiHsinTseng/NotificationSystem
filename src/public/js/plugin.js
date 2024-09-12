@@ -1,3 +1,5 @@
+import initializeJobPlugin from './jobPlugin.js';
+
 let instance;
 // ES6 模塊自帶作用域隔離，每個模塊都是獨立的，無需擔心變數覆蓋的問題。
 
@@ -26,10 +28,13 @@ export default function initializePlugin(token) {
   let userPlugins = []; // 要共用要擺對位置?併發會不會有問題
   let isJobPluginEnabled = false;
 
+  const { openJobs, openJobInfo } = initializeJobPlugin(token);
+
   const isAdmin = localStorage.getItem('isAdmin') === 'true'; // localstorage存字串
   if (isAdmin) {
     pluginAdminContainer.style.display = 'block';
   }
+
   function displayPlugins() {
     // 如果 userPlugins 或 plugins 未定義，給它們賦一個默認值
     userPlugins = userPlugins || [];
@@ -189,17 +194,59 @@ export default function initializePlugin(token) {
     }
   });
 
-  function checkJobPlugin() {
-  // 檢查插件狀態
-    isJobPluginEnabled = userPlugins.some((plugin) => plugin.plugin_name === jobPluginName); // 如何與id有所連結？讓系統方便代理請求 //TODO
-    console.log(userPlugins);
-    return isJobPluginEnabled;
+  async function handleNotification(notifications, notification) {
+    // 其中一個關於job_plugin的判斷（要插分成查表、加載js、）
+    function checkJobPlugin() {
+      // 檢查插件狀態
+      isJobPluginEnabled = userPlugins.some((plugin) => plugin.plugin_name === jobPluginName); // 如何與id有所連結？讓系統方便代理請求 //TODO
+      console.log(userPlugins);
+      return isJobPluginEnabled;
+    }
+
+    isJobPluginEnabled = checkJobPlugin();
+
+    // console.log(notification.sender)
+    if (notification.sender === 'Job_Pub' && notification.type === 'routine') {
+      if (isJobPluginEnabled) {
+        await openJobs(notifications, notification.notification_id);
+      } else {
+        alert('Job plugin is not enabled.');
+      }
+    }
+    if (notification.sender === 'Job_Pub' && (notification.type === 'job_id_channel' || notification.type === 'company_name_channel')) {
+      if (isJobPluginEnabled) {
+        await openJobInfo(notifications, notification.notification_id);
+      } else {
+        alert('Job plugin is not enabled.');
+      }
+    }
   }
-  // return {
-  //   checkJobPlugin, fetchUserPlugins, fetchPlugins,
-  // };
+  // TODO 耦合插件
+  // 根據sender判斷屬性，來發送api
+  // 觸發條件（JSON格式）與發送api
+  // {
+  //   "Job_Sub_Pub": {
+  //     "on_sidebar": {
+  //       "openJobs":{
+  //         "by": {
+  //           "sender": "Job_Pub",
+  //           "type": "routine"
+  //         },
+  //         "action": "openJobs()"
+  //       },
+  //       "openJobsInfo":{
+  //         "by": {
+  //           "sender": "Job_Pub",
+  //           "type": ["job_id_channel","company_name_channel"]
+  //         },
+  //         "action": "openJobInfo()"
+  //       }
+  //     }
+  //   }
+  // }
+
   instance = {
-    checkJobPlugin, fetchUserPlugins, fetchPlugins,
+    fetchUserPlugins, fetchPlugins, handleNotification,
   };
 
   return instance; // 返回初始化後的實例
