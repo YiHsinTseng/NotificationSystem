@@ -2,6 +2,28 @@ import formatDate from './dateUtils.js';
 
 export default function initializeJobPlugin(token, job_plugin_id) {
   // JOB 訂閱模組
+  const sideBarContainer = document.getElementById('side-bar-container');
+
+  const pluginHtml = ` <div class="job-plugin-container" id="job-plugin-container">
+            <h2>Job SideBar</h2>
+            <button id="toggle-subscribe-form">訂閱職缺條件</button>
+            <!-- TODO 加入下拉選單  -->
+            <div class="subscribe-form" id="subscribe-form" style="display: none;">
+                <label for="industries">行業:</label> 
+                <input type="text" id="industries" placeholder="輸入行業名稱">
+                <br>
+                <label for="job_info">職位資訊:</label>
+                <input type="text" id="job_info" placeholder="輸入職位關鍵詞，用逗號或空格分隔" size="50">
+                <br>
+                <button id="subscribe-button">訂閱</button>
+            </div>
+            <div class="job-list-container" id="job-list-container">
+                <div id="job-list"></div>
+            </div>
+        </div>`;
+
+  sideBarContainer.innerHTML += pluginHtml;
+
   const jobPluginContainer = document.getElementById('job-plugin-container');
   const toggleSubscribeFormButton = document.getElementById('toggle-subscribe-form');
   const subscribeForm = document.getElementById('subscribe-form');

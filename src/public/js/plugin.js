@@ -21,20 +21,23 @@ export default function initializePlugin(token) {
   const errorMessage = document.getElementById('errorMessage');
   const responseMessage = document.getElementById('responseMessage');
 
+  const isAdmin = localStorage.getItem('isAdmin') === 'true'; // localstorage存字串
+  if (isAdmin) {
+    pluginAdminContainer.style.display = 'block';
+  }
+
   let plugins = [];
   let userPlugins = []; // 要共用要擺對位置?併發會不會有問題
 
-  // TODO 有需要這樣解耦嗎？
+  //  TODO 調整plugin.config
+  // 以fetchUserPlugin取得對應
+  // 根據plugin_id來對應初始化
   // 讓每個plugin都有對應相同函式，然後迭代
   const jobPluginName = 'Job_Sub_Pub';
   const job_plugin_id = '7ab0c877-6126-4c12-9587-2b32cb0d9f6d';
 
   const { openJobs, openJobInfo, pluginSideBarContainer } = initializeJobPlugin(token, job_plugin_id);
   //
-  const isAdmin = localStorage.getItem('isAdmin') === 'true'; // localstorage存字串
-  if (isAdmin) {
-    pluginAdminContainer.style.display = 'block';
-  }
 
   function displayPlugins() {
     // 如果 userPlugins 或 plugins 未定義，給它們賦一個默認值
@@ -129,32 +132,32 @@ export default function initializePlugin(token) {
     });
   }
 
-  function fetchPlugins() {
-    fetch('api/system/plugins', {
+  function fetchPluginsAndUserPlugins() {
+    const pluginFetch = fetch('api/system/plugins', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-    }).then((response) => response.json())
-      .then((data) => {
-        plugins = data.plugins;
-        //   userPlugins = data.userPlugins;
-        displayPlugins();
-      });
-  }
+    }).then((response) => response.json());
 
-  function fetchUserPlugins() {
-    fetch('api/plugins', {
+    const userPluginFetch = fetch('api/plugins', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-    }).then((response) => response.json())
-      .then((data) => {
-        userPlugins = data.plugins;
+    }).then((response) => response.json());
+
+    Promise.all([pluginFetch, userPluginFetch])
+      .then(([pluginData, userPluginData]) => {
+        plugins = pluginData.plugins;
+        userPlugins = userPluginData.plugins;
+
         displayPlugins();
+      })
+      .catch((error) => {
+        console.error('Error fetching plugins:', error);
       });
   }
   pluginButton.addEventListener('click', () => {
@@ -252,7 +255,7 @@ export default function initializePlugin(token) {
   // }
 
   instance = {
-    fetchUserPlugins, fetchPlugins, handleNotification,
+    fetchPluginsAndUserPlugins, handleNotification,
   };
 
   return instance; // 返回初始化後的實例

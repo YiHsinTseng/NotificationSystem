@@ -10,12 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutButton = document.getElementById('logout-button'); // 新增登出按鈕
 
     const { fetchNotificationCount } = initializeNotification(token);
-    const { fetchPlugins, fetchUserPlugins } = initializePlugin(token);
+    const { fetchPluginsAndUserPlugins } = initializePlugin(token);
 
     function logout() {
-      // 清除 localStorage 中的 token
       localStorage.removeItem('authToken');
-      // 重定向到登錄頁面
       window.location.href = '/login';
     }
 
@@ -25,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 初次加載時獲取通知數量
     fetchNotificationCount();
-    fetchPlugins();
-    fetchUserPlugins();
+    fetchPluginsAndUserPlugins();
   }
 });
