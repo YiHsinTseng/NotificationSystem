@@ -1,6 +1,5 @@
 // const model = require('../services/notif');
 const User = require('../models/user');
-const { getDaysAgoInTimeZone } = require('../utils/dateUtils');
 
 const getNotificationsCount = async (notificationRepository, user_id) => {
   try {
@@ -104,7 +103,9 @@ const patchNotification = async (notificationRepository, user_id, notification_i
 
 const deleteOldNotifications = async (notificationRepository, user_id, daysAgo = 3) => {
   try {
-    const delDay = getDaysAgoInTimeZone(daysAgo);
+    const today = new Date();
+    const delDay = new Date(today);
+    delDay.setDate(today.getDate() - daysAgo);
     // console.log(delDay);
     await notificationRepository.deleteOldNotifications(user_id, delDay);
     // console.log(`已成功刪除${daysAgo}天前的通知`);
