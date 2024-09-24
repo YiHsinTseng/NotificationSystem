@@ -1,9 +1,36 @@
-import formatDate from './dateUtils.js';
+import formatDate from '../dateUtils.js';
 
-export default function initializeJobPlugin(token) {
+let instance;
+
+export default function initializePlugin(token, job_plugin_id) {
   // JOB 訂閱模組
-  const job_plugin_id = '7ab0c877-6126-4c12-9587-2b32cb0d9f6d'; // TODO 有需要這樣解耦嗎？
 
+  if (instance) {
+    return instance; // 返回已經初始化過的實例，不會有後續處理
+  }
+  const sideBarContainer = document.getElementById('side-bar-container');
+
+  const pluginHtml = ` <div class="job-plugin-container" id="job-plugin-container">
+            <h2>Job SideBar</h2>
+            <button id="toggle-subscribe-form">訂閱職缺條件</button>
+            <!-- TODO 加入下拉選單  -->
+            <div class="subscribe-form" id="subscribe-form" style="display: none;">
+                <label for="industries">行業:</label> 
+                <input type="text" id="industries" placeholder="輸入行業名稱">
+                <br>
+                <label for="job_info">職位資訊:</label>
+                <input type="text" id="job_info" placeholder="輸入職位關鍵詞，用逗號或空格分隔" size="50">
+                <br>
+                <button id="subscribe-button">訂閱</button>
+            </div>
+            <div class="job-list-container" id="job-list-container">
+                <div id="job-list"></div>
+            </div>
+        </div>`;
+
+  sideBarContainer.innerHTML += pluginHtml;
+
+  const jobPluginContainer = document.getElementById('job-plugin-container');
   const toggleSubscribeFormButton = document.getElementById('toggle-subscribe-form');
   const subscribeForm = document.getElementById('subscribe-form');
   subscribeForm.style.display = 'none';
@@ -134,12 +161,11 @@ export default function initializeJobPlugin(token) {
     }
 
     if (notification.link && notification.link.url) {
-      console.log('link');
       const { url } = notification.link;
       const data = notification.link.data || {};
       const { authToken } = notification.link;
-      console.log(url);
-      console.log(data);
+      // console.log(url);
+      console.log('查詢職缺條件', data);
 
       // 可能需要透過後端前處理結合有訂閱的網站或公司清單（由前端發送可能不太好，外掛ID會洩漏）
       fetch(url, {
@@ -151,7 +177,7 @@ export default function initializeJobPlugin(token) {
       })
         .then((response) => response.json())
         .then((data) => {
-          console.log(data); // 修正變數名
+          console.log('查詢職缺詳細資料', data); // 修正變數名
           const jobListElement = document.getElementById('job-list');
           jobListElement.innerHTML = '';
 
@@ -360,7 +386,11 @@ export default function initializeJobPlugin(token) {
     jobListElement.appendChild(jobItem);
   }
 
-  return {
-    openJobInfo, openJobs,
+  // return {
+  //   openJobInfo, openJobs, pluginSideBarContainer: jobPluginContainer,
+  // };
+  instance = {
+    openJobInfo, openJobs, pluginSideBarContainer: jobPluginContainer,
   };
+  return instance; // 返回初始化後的實例
 }

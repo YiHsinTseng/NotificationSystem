@@ -7,6 +7,7 @@ const register = async (req, res, next) => {
     // 確認信箱是否被註冊過
     const emailExist = await User.emailExists(req.body.email);
     if (emailExist) throw new AppError(res, 409, 'This email has already been registered');
+    const isAdmin = (req.body.email === 'admin123@gmail.com');
 
     // 製作新用戶
     const {
@@ -19,7 +20,7 @@ const register = async (req, res, next) => {
     const result = await newUser.createUser();
     if (result.success) {
       return res.status(201).json({
-        status: 'success', message: result.message, token, redirectTo: '/index.html',
+        status: 'success', message: result.message, token, isAdmin, redirectTo: '/index.html',
       });
     }
     throw new AppError(res, 400, 'Failed to register');

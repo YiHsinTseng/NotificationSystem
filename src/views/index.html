@@ -10,23 +10,6 @@
 </head>
 <body>
     <div class="side-bar-container" id="side-bar-container">
-        <div class="job-plugin-container" id="job-plugin-container">
-            <h2>Job SideBar</h2>
-            <button id="toggle-subscribe-form">訂閱職缺條件</button>
-            <!-- TODO 加入下拉選單  -->
-            <div class="subscribe-form" id="subscribe-form" style="display: none;">
-                <label for="industries">行業:</label> 
-                <input type="text" id="industries" placeholder="輸入行業名稱">
-                <br>
-                <label for="job_info">職位資訊:</label>
-                <input type="text" id="job_info" placeholder="輸入職位關鍵詞，用逗號或空格分隔" size="50">
-                <br>
-                <button id="subscribe-button">訂閱</button>
-            </div>
-            <div class="job-list-container" id="job-list-container">
-                <div id="job-list"></div>
-            </div>
-        </div>
     </div>
     <div class="notification-container">
         <div class="notification-count" id="notification-count">0</div>
@@ -51,6 +34,14 @@
             
                     <label for="plugin_apis">Plugin APIs (JSON):</label>
                     <textarea id="plugin_apis" name="plugin_apis" placeholder='{"routine_sub": "http://example.com"}' rows="8" required></textarea>
+                    <label for="plugin_ui">Plugin UI (JSON):</label>
+                    <textarea id="plugin_ui" name="plugin_ui" placeholder=
+                    '{ "sidebar": {
+                        "openJobs": {
+                        "byNotifField": {
+                            "sender": "Job_Pub",
+                            "type": "routine"},
+                        "action": "openJobs"}}}' rows="8" required></textarea>         
                     <div id="errorMessage" class="error"></div>
             
                     <button type="submit">Submit</button>
@@ -62,6 +53,5 @@
     </div>
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script type="module" src="./js/main.js"></script>
-    <!-- 避免全域撞名 IIFE -->
 </body>
 </html>

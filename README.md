@@ -59,7 +59,29 @@ Plugin APIs (JSON):
 "instant_sub":"http://localhost:4000/api/id_subscriptions",
 "search":"http://localhost:4000/api/filterJobsBySub",
 "subInfo":"http://localhost:4000/api/id_subscriptions",
-"jobSubInfo":"http://localhost:4000/api/filterJobsBySub"
+"jobSubInfo":"http://localhost:4000/api/jobs_subscriptions"
+}
+```
+
+Plugin UI (JSON):
+```
+{
+  "sidebar": {
+      "openJobs": {
+      "byNotifField": {
+          "sender": "Job_Pub",
+          "type": "routine"
+      },
+      "action": "openJobs"
+      },
+      "openJobsInfo": {
+      "byNotifField": {
+          "sender": "Job_Pub",
+          "type": ["job_id_channel", "company_name_channel"]
+      },
+      "action": "openJobInfo"
+      }
+  }
 }
 ```
 

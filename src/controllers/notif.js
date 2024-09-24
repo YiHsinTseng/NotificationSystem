@@ -26,7 +26,7 @@ const addNotification = async (req, res, next) => {
 
     await notifSerivce.addNotifications(notificationRepository, user_id, message); // Assume this is async
     const notifications = await notifSerivce.getNotifications(notificationRepository, user_id);
-    io.emit('notificationUpdate', notifications); // 只要推送{count} 要確保資料格式很熟
+    io.emit('notificationUpdate', notifications.count); // 只要推送{count} 要確保資料格式很熟
 
     // io.emit('notificationUpdate', { count: notifications.count }); // 只要推送{count} 要確保資料格式很熟
     console.log('Notifications count to be emitted:', notifications.count);

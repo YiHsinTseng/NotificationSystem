@@ -4,9 +4,11 @@ const AppError = require('../utils/appError');
 const User = require('../models/user');
 
 // 添加外掛到系統外掛中
-const addSystemPlugin = async (plugin_name, plugin_desc, plugin_apis) => {
+const addSystemPlugin = async (plugin_name, plugin_desc, plugin_apis, plugin_path, ui_event_handler) => {
   try {
-    const newPlugin = new Plugin({ plugin_name, plugin_desc, plugin_apis });
+    const newPlugin = new Plugin({
+      plugin_name, plugin_desc, plugin_apis, plugin_path, ui_event_handler,
+    }); // 無法自由呈現無關mongoose
     // await plugin.validate(); // 確保外掛數據是有效的
 
     // 儲存到系統外掛清單中
