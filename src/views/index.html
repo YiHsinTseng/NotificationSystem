@@ -34,6 +34,14 @@
             
                     <label for="plugin_apis">Plugin APIs (JSON):</label>
                     <textarea id="plugin_apis" name="plugin_apis" placeholder='{"routine_sub": "http://example.com"}' rows="8" required></textarea>
+                    <label for="plugin_ui">Plugin UI (JSON):</label>
+                    <textarea id="plugin_ui" name="plugin_ui" placeholder=
+                    '{ "sidebar": {
+                        "openJobs": {
+                        "byNotifField": {
+                            "sender": "Job_Pub",
+                            "type": "routine"},
+                        "action": "openJobs"}}}' rows="8" required></textarea>         
                     <div id="errorMessage" class="error"></div>
             
                     <button type="submit">Submit</button>
@@ -45,6 +53,5 @@
     </div>
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script type="module" src="./js/main.js"></script>
-    <!-- 避免全域撞名 IIFE -->
 </body>
 </html>

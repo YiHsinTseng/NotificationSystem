@@ -55,7 +55,7 @@ const setupMqttClient = (notifService, notificationRepository, io) => {
       const user_id = await addjobNotifications(notificationRepository, messageObject, sender, type);
       if (user_id) {
         const notification = await notifService.getNotifications(notificationRepository, user_id);
-        io.emit('notificationUpdate', notification);
+        io.emit('notificationUpdate', notification.count);
         console.log(notification.count);
       }
     }
@@ -67,7 +67,7 @@ const setupMqttClient = (notifService, notificationRepository, io) => {
       const user_id = await addfastNotifications(notificationRepository, messageObject, sender, type);
       if (user_id) {
         const notification = await notifService.getNotifications(notificationRepository, user_id);
-        io.emit('notificationUpdate', notification);
+        io.emit('notificationUpdate', notification.count);
         console.log(notification.count);
       }
     }
@@ -79,7 +79,7 @@ const setupMqttClient = (notifService, notificationRepository, io) => {
       const user_id = await addfastNotifications(notificationRepository, messageObject, sender, type);
       if (user_id) {
         const notification = await notifService.getNotifications(notificationRepository, user_id);
-        io.emit('notificationUpdate', notification);
+        io.emit('notificationUpdate', notification.count);
         console.log(notification.count);
       }
     }

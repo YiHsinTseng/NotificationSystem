@@ -2,7 +2,7 @@
 
 let socket;
 
-export default function initializeSocket(token) {
+export default async function initializeSocket(token) {
   socket = io({
     auth: {
       token,

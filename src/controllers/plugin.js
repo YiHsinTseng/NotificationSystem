@@ -4,8 +4,10 @@ const pluginProxyService = require('../services/pluginProxy'); // 假設服務�
 // 添加外掛到系統外掛清單
 const addSystemPlugin = async (req, res, next) => {
   try {
-    const { plugin_name, plugin_desc, plugin_apis } = req.body;
-    const plugin = await service.addSystemPlugin(plugin_name, plugin_desc, plugin_apis);
+    const {
+      plugin_name, plugin_desc, plugin_apis, plugin_path, ui_event_handler,
+    } = req.body;
+    const plugin = await service.addSystemPlugin(plugin_name, plugin_desc, plugin_apis, plugin_path, ui_event_handler);
     res.status(201).json({ success: true, message: 'Plugin added successfully to system', plugin });
   } catch (error) {
     next(error);
@@ -77,6 +79,8 @@ const sendPluginRequest = async (req, res, next) => {
     const { user_id } = req.user;
     const { plugin_id, apiType } = req.params;
     const { type, data } = req.body;
+    console.log(user_id, plugin_id, apiType, type, data);
+
     // 調用 pluginProxyService 發送請求
     const result = await pluginProxyService.sendRequest(user_id, plugin_id, apiType, type, data);
 

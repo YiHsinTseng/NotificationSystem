@@ -20,6 +20,7 @@ const authenticateJwt = (req, res, next) => {
   })(req, res, next);
 };
 
+// 需要有註冊不然無法直接登入？
 const authenticateJwtSocket = (socket, next) => {
   const { token } = socket.handshake.auth;
 
@@ -27,7 +28,7 @@ const authenticateJwtSocket = (socket, next) => {
     // 在 WebSocket 上無法直接使用 passport.authenticate，手動處理 JWT 驗證
     passport.authenticate('jwt', { session: false }, (err, user) => {
       if (err || !user) {
-        console.error('Authentication error:', err || 'No user found');
+        console.error('Authentication error:', err || 'No user found1');
         return next(new Error('Authentication error'));
       }
       // console.log(user);

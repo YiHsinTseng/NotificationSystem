@@ -27,8 +27,8 @@ const setupSocketIo = (server, notifService, notificationRepository) => {
       // userConnections.set(user_id, socket); // 存到全局
       // console.log(user_id);
       const notification = await notifService.getNotifications(notificationRepository, user_id);
-      socket.emit('notificationUpdate', notification);
-      console.log(notification.count);
+      socket.emit('notificationUpdate', notification.count);
+      // console.log(notification.count);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }

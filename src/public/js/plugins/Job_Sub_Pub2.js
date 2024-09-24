@@ -1,7 +1,13 @@
-import formatDate from './dateUtils.js';
+import formatDate from '../dateUtils.js';
 
-export default function initializeJobPlugin(token, job_plugin_id) {
+let instance;
+
+export default function initializePlugin(token, job_plugin_id) {
   // JOB 訂閱模組
+
+  if (instance) {
+    return instance; // 返回已經初始化過的實例，不會有後續處理
+  }
   const sideBarContainer = document.getElementById('side-bar-container');
 
   const pluginHtml = ` <div class="job-plugin-container" id="job-plugin-container">
@@ -155,12 +161,11 @@ export default function initializeJobPlugin(token, job_plugin_id) {
     }
 
     if (notification.link && notification.link.url) {
-      console.log('link');
       const { url } = notification.link;
       const data = notification.link.data || {};
       const { authToken } = notification.link;
-      console.log(url);
-      console.log(data);
+      // console.log(url);
+      console.log('查詢職缺條件', data);
 
       // 可能需要透過後端前處理結合有訂閱的網站或公司清單（由前端發送可能不太好，外掛ID會洩漏）
       fetch(url, {
@@ -172,7 +177,7 @@ export default function initializeJobPlugin(token, job_plugin_id) {
       })
         .then((response) => response.json())
         .then((data) => {
-          console.log(data); // 修正變數名
+          console.log('查詢職缺詳細資料', data); // 修正變數名
           const jobListElement = document.getElementById('job-list');
           jobListElement.innerHTML = '';
 
@@ -381,7 +386,11 @@ export default function initializeJobPlugin(token, job_plugin_id) {
     jobListElement.appendChild(jobItem);
   }
 
-  return {
+  // return {
+  //   openJobInfo, openJobs, pluginSideBarContainer: jobPluginContainer,
+  // };
+  instance = {
     openJobInfo, openJobs, pluginSideBarContainer: jobPluginContainer,
   };
+  return instance; // 返回初始化後的實例
 }
