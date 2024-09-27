@@ -1,5 +1,5 @@
 import { setupNotificationEventListeners } from './notification.js';
-import { setupPluginEventListeners, initializePlugin } from './plugin.js';// 會重名
+import { setupPluginEventListeners, initializePluginManger } from './plugin.js';// 會重名
 
 /*
 1. 載入並初始化主要服務功能：
@@ -18,12 +18,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logoutButton = document.getElementById('logout-button'); // 新增登出按鈕
 
     // Setup event listeners與函數要分開
+    const { fetchPluginsAndUserPlugins } = initializePluginManger(token);
     setupPluginEventListeners(token);
-    const { fetchPluginsAndUserPlugins } = initializePlugin(token);
-    const userPlugins = await fetchPluginsAndUserPlugins();
+    const userPlugins = await fetchPluginsAndUserPlugins(token);
     console.log('全局', userPlugins);
+
     // 監聽器對象也會受到外部狀態影響隨之改變
-    setupNotificationEventListeners(token, userPlugins);
+    setupNotificationEventListeners(token, userPlugins);// 通知交互行為受外掛影響
 
     function logout() {
       localStorage.removeItem('authToken');

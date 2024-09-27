@@ -1,7 +1,8 @@
-// import initializeJobPlugin from './plugins/jobPlugin.js';// 不要引用要用相對路徑
+import {
+  addPlugin, postPlugin, removePlugin, fetchPlugins, fetchUserPlugins,
+} from './apis.js';
 
-// ES6 模塊自帶作用域隔離，每個模塊都是獨立的，無需擔心變數覆蓋的問題。
-
+// UI
 function getDomElement() {
   return {
     pluginButton: document.getElementById('plugin-button'),
@@ -19,7 +20,91 @@ function getDomElement() {
   };
 }
 
-export function initializePlugin(token) {
+// Plugin 載入
+
+// 檢查本地檔案是否存在的函數
+async function checkFileExists(filePath) {
+  try {
+    const response = await fetch(`js/${filePath}`);
+    if (!response.ok) {
+      console.log(`Plugin file does not exist at path: ${filePath}`);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error checking file existence:', error);
+    return false;
+  }
+}
+
+async function loadAndInitializeJobPlugin(token, userPlugins) {
+  console.log('開始載入不同套件', userPlugins);
+  try {
+    await Promise.all(userPlugins.map(async (item) => { // 因為map是同步返回array
+    // 動態載入 JS 檔案，腳本本來就在雲端，因為我是伺服器渲染
+      const filePath = `./plugins/${item.plugin_path}`;
+      const fileExists = await checkFileExists(filePath);
+      if (fileExists) {
+        const PluginModule = await import(filePath);
+        // 從載入的模組中取得 initializeJobPlugin 函式
+        // TODO 同檔案因為intial 兩次會有兩個container?DOM只會改第一個
+        // TODO 插件監聽器要跟函數分開嗎
+        // 插件只會載入一次
+
+        const { setupEventListeners, initializePlugin } = PluginModule;
+        const { pluginSideBarContainer } = await setupEventListeners(token, item.plugin_id);// 這裡還是要單例
+
+        // TODO 需要解構，取得所有函式
+        const { openJobs, openJobInfo } = await initializePlugin(token, item.plugin_id);
+        item.pluginSideBarContainer = pluginSideBarContainer;// TODO 存在這裡如果刪掉很尷尬，要是要了解具體行為（全局觀），目前是讓container資訊被copy
+        // 根據插件配置調用對應的函數
+        const actions = item.ui_event_handler.sidebar;
+        if (actions.openJobs.action === 'openJobs') {
+          actions.openJobs.func = openJobs;
+        }
+        if (actions.openJobsInfo.action === 'openJobInfo') {
+          actions.openJobsInfo.func = openJobInfo;
+        }
+      }
+    }));
+  } catch (error) {
+    console.error('Failed to load the job plugin:', error);
+  }
+}
+
+export async function handleNotification(notifications, notification, userPlugins) {
+  console.log('按鈕觸發', userPlugins);
+  function generateConditions(data) {
+    const handlers = [];
+
+    data.forEach((plugin) => {
+      const eventHandlers = plugin.ui_event_handler.sidebar;
+      for (const handlerKey in eventHandlers) {
+        const { byNotifField, func } = eventHandlers[handlerKey];
+        const { sender } = byNotifField;
+        const types = Array.isArray(byNotifField.type) ? byNotifField.type : [byNotifField.type];
+
+        types.forEach((type) => {
+          handlers.push({
+            sender,
+            type,
+            func,
+          });
+        });
+      }
+    });
+    return handlers;
+  }
+  const handlers = generateConditions(userPlugins);
+  console.log('ADDED DOM', handlers);
+  handlers.forEach(async (handler) => {
+    if (notification.sender === handler.sender && notification.type === handler.type) {
+      await handler.func(notifications, notification.notification_id); // 動態調用對應的函數
+    }
+  });
+}
+
+export function initializePluginManger(token) {
   const {
     availablePluginsElement,
     pluginAdminContainer,
@@ -30,129 +115,12 @@ export function initializePlugin(token) {
   if (isAdmin) {
     pluginAdminContainer.style.display = 'block';
   }
+
   // TODO這裡可能是問題點
   let plugins = [];
-  let userPlugins = []; // 要共用要擺對位置?併發會不會有問題
+  let userPlugins = [];
 
-  // 這樣就不會因為刪除而遺忘container了，因為html也不會消除
-
-  // TODO PG消除刷新之後還是會消失
-  const containersCache = {};
-  function handlePlugins(plugin_id) {
-    // 如果已經有該 plugin_id 的全局容器，則直接返回它
-    if (containersCache[plugin_id]) {
-      return containersCache[plugin_id];
-    }
-
-    const idx = userPlugins.findIndex((plugin) => plugin.plugin_id === plugin_id);
-    if (idx !== -1) {
-    // 緩存原始的 DOM 容器
-      const originalContainer = userPlugins[idx].pluginSideBarContainer;
-      containersCache[plugin_id] = originalContainer;// TODO消除刷新之後還是會消失
-      return originalContainer; // 返回原始的 DOM 容器
-    }
-
-    // 如果找不到插件，返回 null
-    return null;
-  }
-
-  // 檢查本地檔案是否存在的函數
-  async function checkFileExists(filePath) {
-    try {
-      const response = await fetch(`js/${filePath}`, { method: 'GET' });
-      return response.ok; // 如果檔案存在，返回 true
-    } catch (error) {
-      console.error('Error checking file existence:', error);
-      return false; // 如果檢查過程中出錯，返回 false
-    }
-  }
-
-  // TODO userPlugins可透過Load函式如何與initializeJobPlugin有連結
-  // TODO loadAndInitializeJobPlugin應該要整合其他兩個函式的功能
-  async function loadAndInitializeJobPlugin(token, userPlugins) {
-    console.log('開始載入不同套件', userPlugins);
-    try {
-      await Promise.all(userPlugins.map(async (item) => { // 因為map是同步返回array
-      // 動態載入 JS 檔案
-
-        // 腳本本來就在雲端，因為我是伺服器渲染
-
-        const filePath = `./plugins/${item.plugin_path}`;
-
-        // 檢查插件檔案是否存在
-        const fileExists = await checkFileExists(filePath);
-
-        if (!fileExists) {
-          console.log(`Plugin file does not exist at path: ${filePath}`);
-        }// TODO fetch錯誤還是會顯示
-
-        const PluginModule = await import(filePath);
-
-        // 從載入的模組中取得 initializeJobPlugin 函式
-        // TODO 同檔案因為intial 兩次會有兩個container?DOM只會改第一個
-
-        // TODO 插件監聽器要跟函數分開嗎
-        // 插件只會載入一次
-        const { setupEventListeners, initializePlugin } = PluginModule;
-        const { pluginSideBarContainer } = await setupEventListeners(token, item.plugin_id);// 這裡還是要單例
-        const { openJobs, openJobInfo } = await initializePlugin(token, item.plugin_id);
-
-        item.pluginSideBarContainer = pluginSideBarContainer;// TODO 存在這裡如果刪掉很尷尬，要是要了解具體行為（全局觀），目前是讓container資訊被copy
-
-        // 根據插件配置調用對應的函數
-
-        const actions = item.ui_event_handler.sidebar;
-
-        if (actions.openJobs.action === 'openJobs') {
-          actions.openJobs.func = openJobs;
-        }
-
-        if (actions.openJobsInfo.action === 'openJobInfo') {
-          actions.openJobsInfo.func = openJobInfo;
-        }
-      }));
-      // console.log(userPlugins);
-      return userPlugins;
-    } catch (error) {
-      console.error('Failed to load the job plugin:', error);
-    }
-  }
-
-  async function handleNotification(notifications, notification, userPlugins) {
-    console.log('按鈕觸發', userPlugins);
-    function generateConditions(data) {
-      const handlers = [];
-
-      data.forEach((plugin) => {
-        const eventHandlers = plugin.ui_event_handler.sidebar;
-
-        for (const handlerKey in eventHandlers) {
-          const { byNotifField, func } = eventHandlers[handlerKey];
-          const { sender } = byNotifField;
-          const types = Array.isArray(byNotifField.type) ? byNotifField.type : [byNotifField.type];
-
-          types.forEach((type) => {
-            handlers.push({
-              sender,
-              type,
-              func,
-            });
-          });
-        }
-      });
-
-      return handlers;
-    }
-    const handlers = generateConditions(userPlugins);
-    console.log('ADDED DOM', handlers);
-    handlers.forEach(async (handler) => {
-      if (notification.sender === handler.sender && notification.type === handler.type) {
-        await handler.func(notifications, notification.notification_id); // 動態調用對應的函數
-      }
-    });
-  }
-
-  function displayPlugins() {
+  function displayPlugins(userPlugins, plugins) {
     // 如果 userPlugins 或 plugins 未定義，給它們賦一個默認值
     userPlugins = userPlugins || [];
     plugins = plugins || [];
@@ -182,7 +150,21 @@ export function initializePlugin(token) {
       const removeButton = document.createElement('button');
       removeButton.className = 'plugin-action-button remove';
       removeButton.textContent = '移除';
-      removeButton.onclick = () => removePlugin(plugin.plugin_id);
+      removeButton.onclick = async () => {
+        // 先隱藏插件容器，然後進行刪除操作
+        try {
+          await removePlugin(token, plugin.plugin_id);
+          plugin.pluginSideBarContainer.style.display = 'none';
+          userPlugins = userPlugins.filter((pl) => pl.plugin_id !== plugin.plugin_id);
+          console.log('NOW PG', userPlugins);
+          // 刪除成功後更新顯示
+          displayPlugins(userPlugins, plugins);
+        } catch (error) {
+          // 如果刪除失敗，可以根據需要重新顯示容器或顯示錯誤
+          console.error('Error removing plugin:', error);
+          plugin.pluginSideBarContainer.style.display = 'flex'; // 重新顯示容器
+        }
+      };
 
       pluginItem.appendChild(removeButton);
       userPluginsElement.appendChild(pluginItem);
@@ -197,92 +179,99 @@ export function initializePlugin(token) {
       const addButton = document.createElement('button');
       addButton.className = 'plugin-action-button add';
       addButton.textContent = '添加';
-      addButton.onclick = () => addPlugin(plugin.plugin_id);
+      addButton.onclick = async () => {
+        try {
+          await addPlugin(token, plugin.plugin_id);
+          userPlugins.push(plugin);
+          console.log('add NOW PG', userPlugins);
+          await loadAndInitializeJobPlugin(token, userPlugins);
+          // 添加成功後更新顯示
+          plugin.pluginSideBarContainer.style.display = 'flex';
+          displayPlugins(userPlugins, plugins);
+        } catch (error) {
+          // 如果添加失敗，可以根據需要隱藏容器或顯示錯誤
+          console.error('Error adding plugin:', error);
+          plugin.pluginSideBarContainer.style.display = 'none'; // 根據需要隱藏容器
+        }
+      };
 
       pluginItem.appendChild(addButton);
       availablePluginsElement.appendChild(pluginItem);
     });
   }
 
-  async function addPlugin(plugin_id) {
-    await fetch(`api/plugins/${plugin_id}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }).then((response) => response.json())
-      .then((data) => {
-        if (data.success) { // 修正
-        //   console.log(data)
-          userPlugins.push(data.plugin);
-          console.log('add NOW PG', userPlugins);
-          // checkPlugins();
-          loadAndInitializeJobPlugin(token, userPlugins)
-            .then(() => {
-              handlePlugins(plugin_id).style.display = 'flex';
-              displayPlugins();
-            });
-        }
-      });
-  }
+  // 有fetch就要display
+  async function fetchPluginsAndUserPlugins(token) {
+    try {
+      const [pluginData, userPluginData] = await Promise.all([
+        fetchUserPlugins(token),
+        fetchPlugins(token),
+      ]);
 
-  async function removePlugin(plugin_id) {
-    // console.log(plugin_id)
-    await fetch(`api/plugins/${plugin_id}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }).then((response) => response.json())
-      .then((data) => {
-        if (data.success) { // 修正
-          handlePlugins(plugin_id).style.display = 'none';// TODO用刪除還是添加style比較好，或去修改css樣式就好，不用直接刪除element
-          userPlugins = userPlugins.filter((plugin) => plugin.plugin_id !== plugin_id);
-          console.log('NOW PG', userPlugins);
-          displayPlugins();
-        }
-      });
-  }
+      plugins = pluginData.plugins;
+      userPlugins = userPluginData.plugins;
+      console.log('Fetch PG', userPlugins);
 
-  async function fetchPluginsAndUserPlugins() {
-    const pluginFetch = fetch('api/system/plugins', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }).then((response) => response.json());
+      await loadAndInitializeJobPlugin(token, userPlugins);
+      displayPlugins(userPlugins, plugins);
 
-    const userPluginFetch = fetch('api/plugins', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }).then((response) => response.json());
-
-    // 這樣才有回傳值
-    return Promise.all([pluginFetch, userPluginFetch])
-      .then(([pluginData, userPluginData]) => {
-        plugins = pluginData.plugins;
-        userPlugins = userPluginData.plugins;
-        console.log('Fetch PG', userPlugins);
-        return loadAndInitializeJobPlugin(token, userPlugins)
-          .then(() => {
-            displayPlugins();
-            return userPlugins;
-          });
-      })
-      .catch((error) => {
-        console.error('Error fetching plugins:', error);
-      });
+      return userPlugins;
+    } catch (error) {
+      console.error('Error fetching plugins:', error);
+      throw error; // 重新拋出錯誤以便調用者處理
+    }
   }
 
   return {
-    fetchPluginsAndUserPlugins, handleNotification, userPlugins,
+    fetchPluginsAndUserPlugins, userPlugins,
   };
+}
+
+// UI PG表單
+
+// 切換插件容器的顯示邏輯
+function togglePluginContainerDisplay(container) {
+  return () => {
+    container.style.display = container.style.display === 'none' ? 'block' : 'none';
+  };
+}
+
+// 清空錯誤訊息和成功訊息
+function clearMessages(errorMessage, responseMessage) {
+  errorMessage.textContent = '';
+  responseMessage.textContent = '';
+}
+
+// 驗證插件表單的輸入數據
+function validatePluginInputs(pluginName, pluginApis, pluginUI) {
+  const namePattern = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+
+  // 驗證插件名稱
+  if (!namePattern.test(pluginName)) {
+    return 'Plugin name must start with a letter and can only contain letters, numbers, underscores, or hyphens.';
+  }
+
+  // 驗證 JSON 格式
+  try {
+    JSON.parse(pluginApis);
+    JSON.parse(pluginUI);
+  } catch (e) {
+    return 'Invalid JSON format in Plugin APIs or Plugin UI.';
+  }
+
+  return null; // 無錯誤
+}
+
+// 提交插件表單到 API
+async function submitPluginForm(token, pluginName, pluginApis, pluginUI) {
+  const formData = {
+    plugin_name: pluginName,
+    plugin_apis: JSON.parse(pluginApis),
+    plugin_path: `${pluginName}.js`,
+    ui_event_handler: JSON.parse(pluginUI),
+  };
+
+  await postPlugin(token, formData);
 }
 
 export async function setupPluginEventListeners(token) {
@@ -297,70 +286,35 @@ export async function setupPluginEventListeners(token) {
     responseMessage,
   } = getDomElement();
 
-  // const { fetchPluginsAndUserPlugins } = initializePlugin(token);// TODO 要放在這裡嗎
+  // 設定顯示和隱藏邏輯
+  pluginButton.addEventListener('click', togglePluginContainerDisplay(pluginContainer));
 
-  // const userPlugins = await fetchPluginsAndUserPlugins();// TODO 要放在這裡嗎
-  // console.log(8881, userPlugins);
-
-  pluginButton.addEventListener('click', () => {
-    pluginContainer.style.display = pluginContainer.style.display === 'none' ? 'block' : 'none';
-  });
-
-  addPluginForm.addEventListener('submit', (event) => {
+  // 處理表單提交邏輯
+  addPluginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    errorMessage.textContent = ''; // Clear previous error
-    responseMessage.textContent = ''; // Clear previous success message
+    // 清空之前的錯誤和回應訊息
+    clearMessages(errorMessage, responseMessage);
 
-    // TODO path目前跟pluginName一樣是否獨立出來
+    // 收集和驗證表單數據
     const pluginName = pluginNameInput.value.trim();
     const pluginApis = pluginApisInput.value.trim();
     const pluginUI = pluginUIInput.value.trim();
 
-    // Define a regex pattern for valid plugin name (adjust as needed)
-    const namePattern = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
-
-    // Validate pluginName
-    if (!namePattern.test(pluginName)) {
-      errorMessage.textContent = 'Plugin name must start with a letter and can only contain letters, numbers, underscores, or hyphens.';
+    // 驗證表單輸入
+    const validationError = validatePluginInputs(pluginName, pluginApis, pluginUI);
+    if (validationError) {
+      errorMessage.textContent = validationError;
       return;
     }
+
+    // 處理 API 提交
     try {
-      // Validate JSON format
-      const parsedApis = JSON.parse(pluginApis);
-      const parsedUI = JSON.parse(pluginUI);
-
-      // If JSON is valid, simulate API submission
-      const formData = {
-        plugin_name: pluginName,
-        plugin_apis: parsedApis,
-        plugin_path: `${pluginName}.js`,
-        ui_event_handler: parsedUI,
-      };
-
-      fetch('api/system/plugins', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      }).then((response) => response.json())
-        .then((data) => {
-          if (data.success !== true) {
-            throw new Error(data.message);
-          }
-          responseMessage.textContent = 'API data submitted successfully:';
-          // fetchPluginsAndUserPlugins();
-          window.location.reload();// 重新載入才能添加監聽器
-        });
-      // 錯誤還是會添加
+      await submitPluginForm(token, pluginName, pluginApis, pluginUI);
+      responseMessage.textContent = 'API data submitted successfully.';
+      window.location.reload(); // 重新加載頁面
     } catch (error) {
-      if (error instanceof SyntaxError) {
-        errorMessage.textContent = 'Invalid JSON format in Plugin APIs or Plugin UI.';
-      } else {
-        errorMessage.textContent = `Error: ${error.message}`;
-      }
+      errorMessage.textContent = error.message;
     }
   });
 }

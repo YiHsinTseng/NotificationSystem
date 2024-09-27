@@ -1,5 +1,5 @@
 import initializeSocket from './socket.js';
-import { initializePlugin } from './plugin.js';
+import { handleNotification } from './plugin.js';
 import formatDate from './dateUtils.js';
 
 // 通知相關元件
@@ -100,7 +100,6 @@ export async function setupNotificationEventListeners(token, userPlugins) {
 
   // 前置環境運行
   const socket = await initializeSocket(token);
-  const { handleNotification } = await initializePlugin(token);// 是否有add
 
   async function updateNotifications() {
     notifications = await fetchNotifications(token);
