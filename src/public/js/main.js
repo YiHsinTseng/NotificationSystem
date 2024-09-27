@@ -1,4 +1,4 @@
-import { setupNotificationEventListeners, initializeNotification } from './notification.js';
+import { setupNotificationEventListeners } from './notification.js';
 import { setupPluginEventListeners, initializePlugin } from './plugin.js';// 會重名
 
 /*
