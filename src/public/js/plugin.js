@@ -25,7 +25,7 @@ function getDomElement() {
 // 檢查本地檔案是否存在的函數
 async function checkFileExists(filePath) {
   try {
-    const response = await fetch(`js/${filePath}`);
+    const response = await fetch(`${filePath}`);
     if (!response.ok) {
       console.log(`Plugin file does not exist at path: ${filePath}`);
       return false;
@@ -42,29 +42,38 @@ async function loadAndInitializeJobPlugin(token, userPlugins) {
   try {
     await Promise.all(userPlugins.map(async (item) => { // 因為map是同步返回array
     // 動態載入 JS 檔案，腳本本來就在雲端，因為我是伺服器渲染
-      const filePath = `./plugins/${item.plugin_path}`;
+      const filePath = `/js/plugins/${item.plugin_path}`;
       const fileExists = await checkFileExists(filePath);
       if (fileExists) {
         const PluginModule = await import(filePath);
-        // 從載入的模組中取得 initializeJobPlugin 函式
-        // TODO 同檔案因為intial 兩次會有兩個container?DOM只會改第一個
-        // TODO 插件監聽器要跟函數分開嗎
+
         // 插件只會載入一次
-
         const { setupEventListeners, initializePlugin } = PluginModule;
-        const { pluginSideBarContainer } = await setupEventListeners(token, item.plugin_id);// 這裡還是要單例
+        const { pluginSideBarContainer } = await setupEventListeners(token, item.plugin_id);// 這裡還是要單例因為容器狀態是非純函數
 
-        // TODO 需要解構，取得所有函式
-        const { openJobs, openJobInfo } = await initializePlugin(token, item.plugin_id);
-        item.pluginSideBarContainer = pluginSideBarContainer;// TODO 存在這裡如果刪掉很尷尬，要是要了解具體行為（全局觀），目前是讓container資訊被copy
+        const pluginFunctions = await initializePlugin(token, item.plugin_id);
+        item.pluginSideBarContainer = pluginSideBarContainer;
+
         // 根據插件配置調用對應的函數
         const actions = item.ui_event_handler.sidebar;
-        if (actions.openJobs.action === 'openJobs') {
-          actions.openJobs.func = openJobs;
-        }
-        if (actions.openJobsInfo.action === 'openJobInfo') {
-          actions.openJobsInfo.func = openJobInfo;
-        }
+
+        // 使用動態映射來設置函數
+        Object.keys(actions).forEach((actionKey) => {
+          const actionConfig = actions[actionKey];
+          if (pluginFunctions[actionKey] && actionConfig.action === actionKey) {
+            actionConfig.func = pluginFunctions[actionKey];
+          }
+        });
+      }
+
+      // 動態添加 CSS 樣式表
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      const cssFilePath = `/css/${item.plugin_path.replace('.js', '.css')}`;
+      const cssFileExists = await checkFileExists(cssFilePath);
+      if (cssFileExists) {
+        link.href = cssFilePath; // 更新為實際 CSS 文件的路徑
+        document.head.appendChild(link);
       }
     }));
   } catch (error) {
@@ -116,7 +125,7 @@ export function initializePluginManger(token) {
     pluginAdminContainer.style.display = 'block';
   }
 
-  // TODO這裡可能是問題點
+  // TODO 這裡可能是問題點，因為必須初始化
   let plugins = [];
   let userPlugins = [];
 
@@ -267,7 +276,7 @@ async function submitPluginForm(token, pluginName, pluginApis, pluginUI) {
   const formData = {
     plugin_name: pluginName,
     plugin_apis: JSON.parse(pluginApis),
-    plugin_path: `${pluginName}.js`,
+    plugin_path: `${pluginName}.js`, // TODO
     ui_event_handler: JSON.parse(pluginUI),
   };
 
