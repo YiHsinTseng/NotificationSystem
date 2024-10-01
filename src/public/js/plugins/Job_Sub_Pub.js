@@ -17,6 +17,7 @@ async function fetchSubscriptionData(token, job_plugin_id) {
     if (data) {
       document.getElementById('industries').value = data.industries.join(', ');
       document.getElementById('job_info').value = data.job_info.join(', ');
+      document.getElementById('exclude_job_title').value = data.exclude_job_title.join(', ');
     }
   } catch (error) { console.error('獲取訂閱數據時發生錯誤:', error); }
 }
@@ -355,12 +356,16 @@ function getDomElement() {
             <button id="toggle-subscribe-form">訂閱職缺條件</button>
             <!-- TODO 加入下拉選單  -->
             <div class="subscribe-form" id="subscribe-form" style="display: none;">
+                <h3>篩選條件</h3>
                 <label for="industries">行業:</label> 
                 <input type="text" id="industries" placeholder="輸入行業名稱">
                 <br>
                 <label for="job_info">職位資訊:</label>
                 <input type="text" id="job_info" placeholder="輸入職位關鍵詞，用逗號或空格分隔" size="50">
                 <br>
+                <h3>排除條件</h3>
+                <label for="job_info">職位名稱:</label>
+                <input type="text" id="exclude_job_title" placeholder="輸入職位關鍵詞，用逗號或空格分隔" size="50">
                 <button id="subscribe-button">訂閱</button>
             </div>
             <div class="job-list-container" id="job-list-container">
@@ -392,7 +397,6 @@ export function setupEventListeners(token, job_plugin_id) {
 
   // 移除後按鈕沒反應
   toggleSubscribeFormButton.addEventListener('click', () => {
-    console.log(123);
     if (subscribeForm.style.display === 'none' || subscribeForm.style.display === '') {
       subscribeForm.style.display = 'block';
       fetchSubscriptionData(token, job_plugin_id);
@@ -401,24 +405,30 @@ export function setupEventListeners(token, job_plugin_id) {
     }
   });
 
+  // 前端寫死是好事
   document.getElementById('subscribe-button').addEventListener('click', () => {
     // TODO 以,空格區分，是否設定字串總長度上限？
-    const industries = document.getElementById('industries').value
-      .split(/[\s,]+/) // 使用正則表達式拆分字串
-      .filter((industry) => industry.trim() !== '') // 過濾掉空的項目
-      .map((industry) => industry.replace(/^["']|["']$/g, '')); // 去除前後的單引號或雙引號
 
-    const job_info = document.getElementById('job_info').value
-      .split(/[\s,]+/)
-      .filter((info) => info.trim() !== '')
-      .map((industry) => industry.replace(/^["']|["']$/g, '')); // 去除前後的單引號或雙引號
+    function processInputString(input) {
+      return input
+        .split(/[\s,]+/) // 使用正則表達式拆分字串
+        .filter((item) => item.trim() !== '') // 過濾掉空白或空的項目
+        .map((item) => item.replace(/^["']|["']$/g, '')); // 去除前後的單引號或雙引號
+    }
+
+    const industries = processInputString(document.getElementById('industries').value);
+    const job_info = processInputString(document.getElementById('job_info').value);
+    const exclude_job_title = processInputString(document.getElementById('exclude_job_title').value);
 
     const subscriptionData = {
       type: 1,
       data: {
         sub: {
-          industries: industries.map((industry) => industry.trim()),
-          job_info: job_info.map((info) => info.trim()),
+          industries,
+          job_info,
+        },
+        exclude: {
+          exclude_job_title,
         },
       },
     };

@@ -226,7 +226,7 @@ export function initializePluginManger(token) {
 
       return userPlugins;
     } catch (error) {
-      console.error('Error fetching plugins:', error);
+      console.log('Error fetching plugins:', error.message);
       throw error; // 重新拋出錯誤以便調用者處理
     }
   }
