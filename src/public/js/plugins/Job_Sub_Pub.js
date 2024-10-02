@@ -1,5 +1,21 @@
 import formatDate from '../dateUtils.js';
 
+// 職缺資料操作
+async function fetchPubbedJobData(url, body) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  const data = await response.json();
+  if (!data.result || data.result.items.length === 0) {
+    throw new Error('no data');
+  }
+
+  return data.result;
+}
+
 // 訂閱資料操作
 async function fetchSubscribedConditions(token, job_plugin_id) {
   try {
@@ -38,7 +54,6 @@ function fetchSubscribedJobsAndCompanies(token, job_plugin_id) {
 }
 
 async function subscribeToJob(token, job_plugin_id, job_ids, company_names, type) {
-  // 發送訂閱請求(第三方api)
   await fetch(`api/plugins/${job_plugin_id}/instant_sub`, {
     method: 'POST',
     headers: {
@@ -49,8 +64,8 @@ async function subscribeToJob(token, job_plugin_id, job_ids, company_names, type
       type,
       data: {
         sub: {
-          job_ids, // Include job IDs here
-          company_names, // Include company names here
+          job_ids,
+          company_names,
         },
       },
     }),
@@ -60,54 +75,7 @@ async function subscribeToJob(token, job_plugin_id, job_ids, company_names, type
   await fetchSubscribedJobsAndCompanies(token, job_plugin_id);
 }
 
-// 職缺資料操作
-async function fetchJobData(url, body) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  const data = await response.json();
-  if (!data.result || data.result.items.length === 0) {
-    throw new Error('no data');
-  }
-
-  return data.result;
-}
-
-// 已讀相關操作
-
-function getReadJobs() {
-  return JSON.parse(localStorage.getItem('readJobs')) || [];
-}
-
-function isJobRead(job_id) {
-  const readJobs = getReadJobs();
-  return readJobs.includes(job_id);
-}
-
-function markJobAsRead(job_id) {
-  const readJobs = getReadJobs();
-  if (!readJobs.includes(job_id)) {
-    readJobs.push(job_id);
-    localStorage.setItem('readJobs', JSON.stringify(readJobs));
-  }
-}
-
-function handleJobItemReadStatus(jobItem, job) {
-  if (isJobRead(job.job_id)) {
-    jobItem.classList.add('read');
-  }
-
-  const jobTitleElement = jobItem.querySelector('.job-title');
-  jobTitleElement.addEventListener('click', () => {
-    markJobAsRead(job.job_id);
-    jobItem.classList.add('read');
-  });
-}
-
-function getSubscribedIds() {
+function getSubscribedJobsAndCompanies() {
   const subscribedIdsString = localStorage.getItem('subscribedJobsAndCompanies');
   let subscribedJobIds = [];
   let subscribedCompanyNames = [];
@@ -127,26 +95,89 @@ function getSubscribedIds() {
   return subscribedJobsAndCompanies;
 }
 
-//
+// 已讀相關操作
+
+function getReadJobs() {
+  return JSON.parse(localStorage.getItem('readJobs')) || [];
+}
+
+function isJobRead(jobId) {
+  const readJobs = getReadJobs();
+  return readJobs.includes(jobId);
+}
+
+function markJobAsRead(jobId) {
+  const readJobs = getReadJobs();
+  if (!readJobs.includes(jobId)) {
+    readJobs.push(jobId);
+    localStorage.setItem('readJobs', JSON.stringify(readJobs));
+  }
+}
+
+// UI
+
+function createJobExperienceElement(jobExperience) {
+  const jobExperienceElement = document.createElement('div');
+  jobExperienceElement.className = 'job_exp';
+  jobExperienceElement.textContent = `年資要求: ${jobExperience}`;
+  return jobExperienceElement;
+}
+
+function createJobDescriptionElement(description) {
+  const jobDescriptionElement = document.createElement('div');
+  jobDescriptionElement.className = 'job-desc';
+  jobDescriptionElement.textContent = description.length > 100 ? `${description.substring(0, 100)}...` : description;
+  return jobDescriptionElement;
+}
+
+function createJobUpdateDateElement(updateDate) {
+  const dateElement = document.createElement('div');
+  dateElement.className = 'job-date';
+  dateElement.textContent = `更新日期: ${formatDate(updateDate)}`;
+  return dateElement;
+}
+
+function createJobSourceElement(source) {
+  const sourceElement = document.createElement('div');
+  sourceElement.className = 'job-source';
+  sourceElement.textContent = `來源: ${source}`;
+  return sourceElement;
+}
+
+function createJobInfoElement(info) {
+  const infoElement = document.createElement('div');
+  infoElement.className = 'job-info';
+  infoElement.textContent = `職位資訊: ${info}`;
+  return infoElement;
+}
+
+function handleFetchError() {
+  const jobListElement = document.getElementById('job-list');
+  jobListElement.innerHTML = '消息過期或無最新職缺';
+}
+
+// 與監聽器有關函式
 export function initializePlugin(token, job_plugin_id) {
-  function displayJobList(data, { subscribedJobIds, subscribedCompanyNames }, token, job_plugin_id, notifications, notificationId) {
-    const jobListElement = document.getElementById('job-list');
-    jobListElement.innerHTML = '';
+  function handleJobItemReadStatus(jobItem, jobId) {
+    if (isJobRead(jobId)) {
+      jobItem.classList.add('read');
+    }
 
-    const sortedItems = data.items.sort((a, b) => new Date(b.update_date) - new Date(a.update_date));
-
-    sortedItems.forEach((job, index) => {
-      const jobItem = createJobItem(job, index + 1, { subscribedJobIds, subscribedCompanyNames }, token, job_plugin_id, notifications, notificationId);
-      jobListElement.appendChild(jobItem);
-      handleJobItemReadStatus(jobItem, job);
+    const jobTitleElement = jobItem.querySelector('.job-title');
+    jobTitleElement.addEventListener('click', () => {
+      markJobAsRead(jobId);
+      jobItem.classList.add('read');
     });
-
-    const infoText = document.createElement('div');
-    infoText.className = 'info-text';
-    jobListElement.appendChild(infoText);
   }
 
-  function createSubscribeButton(text, subscribedItem, subscribedJobsAndCompanies, token, job_plugin_id, notifications, notificationId) {
+  function createSubscribeButton(
+    text,
+    subscribedItem,
+    subscribedJobsAndCompanies,
+    token,
+    job_plugin_id,
+    notification,
+  ) {
     const button = document.createElement('button');
     button.className = 'subscribe-button';
     const isSubscribed = subscribedJobsAndCompanies.includes(subscribedItem);
@@ -165,19 +196,26 @@ export function initializePlugin(token, job_plugin_id) {
           console.warn(`未處理的按鈕文本: ${text}`);
           break;
       }
-      await openJobs(notifications, notificationId);
+      await openJobs(notification);
     });
 
     return button;
   }
 
-  function createJobItem(job, index, { subscribedJobIds, subscribedCompanyNames }, token, job_plugin_id, notifications, notificationId) {
+  function createJobItem(
+    job,
+    indexOfItem,
+    { subscribedJobIds, subscribedCompanyNames },
+    token,
+    job_plugin_id,
+    notification,
+  ) {
     const jobItem = document.createElement('div');
     jobItem.className = 'job-item';
 
     const jobNumber = document.createElement('div');
     jobNumber.className = 'job-number';
-    jobNumber.textContent = `#${index}`;
+    jobNumber.textContent = `#${indexOfItem}`;
 
     const jobTitleElement = document.createElement('a');
     jobTitleElement.className = 'job-title';
@@ -191,11 +229,16 @@ export function initializePlugin(token, job_plugin_id) {
       subscribedJobIds,
       token,
       job_plugin_id,
-      notifications,
-      notificationId,
+      notification,
     );
 
-    function createCompanyElement(companyName, subscribedCompanyNames, token, job_plugin_id, notifications, notificationId) {
+    function createCompanyElement(
+      companyName,
+      subscribedCompanyNames,
+      token,
+      job_plugin_id,
+      notification,
+    ) {
       const companyElement = document.createElement('div');
       companyElement.className = 'job-company';
       companyElement.textContent = companyName;
@@ -206,24 +249,27 @@ export function initializePlugin(token, job_plugin_id) {
         subscribedCompanyNames,
         token,
         job_plugin_id,
-        notifications,
-        notificationId,
+        notification,
       );
 
       companyElement.appendChild(subscribeButtonCompany);
       return companyElement;
     }
 
-    const companyElement = createCompanyElement(job.company_name, subscribedCompanyNames, token, job_plugin_id, notifications, notificationId);
+    const companyElement = createCompanyElement(
+      job.company_name,
+      subscribedCompanyNames,
+      token,
+      job_plugin_id,
+      notification,
+    );
 
-    // 職位描述
-    const jobExperienceElement = createJobExperience(job.job_exp);
-    const jobDescriptionElement = createJobDescription(job.job_desc);
-    const updateDate = createJobUpdateDate(job.update_date);
-    const source = createJobSource(job.source);
-    const jobInfoElement = createJobInfo(job.job_info);
+    const jobExperienceElement = createJobExperienceElement(job.job_exp);
+    const jobDescriptionElement = createJobDescriptionElement(job.job_desc);
+    const updateDate = createJobUpdateDateElement(job.update_date);
+    const source = createJobSourceElement(job.source);
+    const jobInfoElement = createJobInfoElement(job.job_info);
 
-    // 新增已讀按鈕
     const readButton = document.createElement('button');
     readButton.className = 'read-button';
     readButton.textContent = '已讀';
@@ -255,81 +301,75 @@ export function initializePlugin(token, job_plugin_id) {
       jobInfoElement,
     );
 
-    handleJobItemReadStatus(jobItem, job.job_id, notifications);
-
     return jobItem;
   }
 
-  function createJobExperience(jobExperience) {
-    const jobExperienceElement = document.createElement('div');
-    jobExperienceElement.className = 'job_exp';
-    jobExperienceElement.textContent = `年資要求: ${jobExperience}`;
-    return jobExperienceElement;
-  }
-
-  function createJobDescription(description) {
-    const jobDescriptionElement = document.createElement('div');
-    jobDescriptionElement.className = 'job-desc';
-    jobDescriptionElement.textContent = description.length > 100 ? `${description.substring(0, 100)}...` : description;
-    return jobDescriptionElement;
-  }
-
-  function createJobUpdateDate(updateDate) {
-    const dateElement = document.createElement('div');
-    dateElement.className = 'job-date';
-    dateElement.textContent = `更新日期: ${formatDate(updateDate)}`;
-    return dateElement;
-  }
-
-  function createJobSource(source) {
-    const sourceElement = document.createElement('div');
-    sourceElement.className = 'job-source';
-    sourceElement.textContent = `來源: ${source}`;
-    return sourceElement;
-  }
-
-  function createJobInfo(info) {
-    const infoElement = document.createElement('div');
-    infoElement.className = 'job-info';
-    infoElement.textContent = `職位資訊: ${info}`;
-    return infoElement;
-  }
-
-  function handleFetchError() {
+  function displayJobList(
+    jobData,
+    { subscribedJobIds, subscribedCompanyNames },
+    token,
+    job_plugin_id,
+    notification,
+  ) {
     const jobListElement = document.getElementById('job-list');
-    jobListElement.innerHTML = '消息過期或無最新職缺';
+    jobListElement.innerHTML = '';
+
+    const sortedJobData = jobData.items.sort(
+      (a, b) => new Date(b.update_date) - new Date(a.update_date),
+    );
+
+    sortedJobData.forEach((job, index) => {
+      const jobItem = createJobItem(
+        job,
+        index + 1,
+        { subscribedJobIds, subscribedCompanyNames },
+        token,
+        job_plugin_id,
+        notification,
+      );
+      jobListElement.appendChild(jobItem);
+      handleJobItemReadStatus(jobItem, job.job_id);
+    });
+
+    const infoText = document.createElement('div');
+    infoText.className = 'info-text';
+    jobListElement.appendChild(infoText);
   }
 
   // JOB查看模組
-  async function openJobs(notifications, notificationId) {
-    const notification = notifications.find((n) => n.notification_id === notificationId);
-
+  async function openJobs(notification) {
     // 從 localStorage 中提取已訂閱的 job_ids 和 company_names
-    const { subscribedJobIds, subscribedCompanyNames } = getSubscribedIds();
+    const { subscribedJobIds, subscribedCompanyNames } = getSubscribedJobsAndCompanies();
 
     if (notification.link?.url) {
       const { url, data = {}, authToken } = notification.link;
       console.log('查詢職缺條件', data);
 
       try {
-        const jobData = await fetchJobData(url, { authToken, data });
-        displayJobList(jobData, { subscribedJobIds, subscribedCompanyNames }, token, job_plugin_id, notifications, notificationId);
+        const pubbedJobData = await fetchPubbedJobData(url, { authToken, data });
+        displayJobList(
+          pubbedJobData,
+          { subscribedJobIds, subscribedCompanyNames },
+          token,
+          job_plugin_id,
+          notification,
+        );
       } catch (error) {
         handleFetchError();
       }
     }
   }
 
-  async function openJobInfo(notifications, notificationId) {
-    const notification = notifications.find((n) => n.notification_id === notificationId);
+  async function openJobInfo(notification) {
     const job = notification.link.data.data; // 命名可能要改過
     console.log(job);
 
     const jobListElement = document.getElementById('job-list');
     jobListElement.innerHTML = '';
 
-    const jobItem = createJobItem(job, 1, [], [], token, job_plugin_id, notifications, notificationId);
+    const jobItem = createJobItem(job, 1, [], [], token, job_plugin_id, notification);
     jobListElement.appendChild(jobItem);
+    handleJobItemReadStatus(jobItem, job.job_id);
   }
 
   return {
@@ -344,7 +384,6 @@ function getDomElement() {
   const pluginHtml = ` <div class="job-plugin-container" id="job-plugin-container">
             <h2>Job SideBar</h2>
             <button id="toggle-subscribe-form">訂閱職缺條件</button>
-            <!-- TODO 加入下拉選單  -->
             <div class="subscribe-form" id="subscribe-form" style="display: none;">
                 <h3>篩選條件</h3>
                 <label for="industries">行業:</label> 
@@ -385,7 +424,6 @@ export function setupEventListeners(token, job_plugin_id) {
 
   subscribeForm.style.display = 'none';
 
-  // 移除後按鈕沒反應
   toggleSubscribeFormButton.addEventListener('click', () => {
     if (subscribeForm.style.display === 'none' || subscribeForm.style.display === '') {
       subscribeForm.style.display = 'block';
@@ -395,10 +433,7 @@ export function setupEventListeners(token, job_plugin_id) {
     }
   });
 
-  // 前端寫死是好事
   document.getElementById('subscribe-button').addEventListener('click', () => {
-    // TODO 以,空格區分，是否設定字串總長度上限？
-
     function processInputString(input) {
       return input
         .split(/[\s,]+/) // 使用正則表達式拆分字串
