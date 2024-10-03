@@ -85,7 +85,7 @@ export async function handleNotification(notification, userPlugins) {
   console.log('按鈕觸發', userPlugins);
   function generateConditions(data) {
     const handlers = [];
-
+    // func名稱寫死在json中，需要另外patch
     data.forEach((plugin) => {
       const eventHandlers = plugin.ui_event_handler.sidebar;
       for (const handlerKey in eventHandlers) {
