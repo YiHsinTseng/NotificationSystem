@@ -37,7 +37,7 @@ body {
 
 .notification-list-container, .plugin-container {
   display: none; /* 初始隱藏 */
-  max-height: 300px;
+  max-height: 330px;
   overflow-y: auto;
   border: 1px solid #ddd;
   border-radius: 5px;

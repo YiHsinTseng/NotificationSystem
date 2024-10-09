@@ -81,11 +81,11 @@ async function loadAndInitializeJobPlugin(token, userPlugins) {
   }
 }
 
-export async function handleNotification(notifications, notification, userPlugins) {
+export async function handleNotification(notification, userPlugins) {
   console.log('按鈕觸發', userPlugins);
   function generateConditions(data) {
     const handlers = [];
-
+    // func名稱寫死在json中，需要另外patch
     data.forEach((plugin) => {
       const eventHandlers = plugin.ui_event_handler.sidebar;
       for (const handlerKey in eventHandlers) {
@@ -108,7 +108,7 @@ export async function handleNotification(notifications, notification, userPlugin
   console.log('ADDED DOM', handlers);
   handlers.forEach(async (handler) => {
     if (notification.sender === handler.sender && notification.type === handler.type) {
-      await handler.func(notifications, notification.notification_id); // 動態調用對應的函數
+      await handler.func(notification); // 動態調用對應的函數
     }
   });
 }

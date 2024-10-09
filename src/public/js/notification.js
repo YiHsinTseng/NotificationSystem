@@ -50,9 +50,9 @@ async function markAsRead(token, notificationId) {
 }
 
 function renderNotificationItem(notification) {
-  const item = document.createElement('div');
-  item.className = `notification-item${notification.isRead ? ' read' : ''}`;
-  item.dataset.id = notification.notification_id;
+  const notificationItem = document.createElement('div');
+  notificationItem.className = `notification-item${notification.isRead ? ' read' : ''}`;
+  notificationItem.dataset.id = notification.notification_id;
 
   const text = document.createElement('div');
   text.textContent = notification.text;
@@ -61,10 +61,10 @@ function renderNotificationItem(notification) {
   date.className = 'notification-date';
   date.textContent = formatDate(notification.createdAt);
 
-  item.appendChild(text);
-  item.appendChild(date);
+  notificationItem.appendChild(text);
+  notificationItem.appendChild(date);
 
-  return item;
+  return notificationItem;
 }
 
 // 根據限制來呈現通知數量
@@ -82,8 +82,8 @@ export function displayNotifications(notificationListElement, loadMoreButton, no
   const notificationsToDisplay = notifications.slice(0, limit);
 
   notificationsToDisplay.forEach((notification) => {
-    const item = renderNotificationItem(notification);
-    fragment.appendChild(item);
+    const notificationItem = renderNotificationItem(notification);
+    fragment.appendChild(notificationItem);
   });
 
   notificationListElement.appendChild(fragment);
@@ -108,16 +108,16 @@ export async function setupNotificationEventListeners(token, userPlugins) {
   }
 
   notificationListElement.addEventListener('click', async (event) => {
-    const item = event.target.closest('.notification-item');
-    if (!item) return;
+    const notificationItem = event.target.closest('.notification-item');
+    if (!notificationItem) return;
 
-    const notificationId = item.dataset.id;
-    const notification = notifications.find((n) => n.notification_id === notificationId);
+    const notificationItemId = notificationItem.dataset.id;
+    const notification = notifications.find((notification) => notification.notification_id === notificationItemId);
 
     if (notification) {
-      await handleNotification(notifications, notification, userPlugins);// 如何取的userPlugins
+      await handleNotification(notification, userPlugins);// 如何取的userPlugins
       await markAsRead(token, notification.notification_id);
-      item.classList.add('read');
+      notificationItem.classList.add('read');
     }
   });
 

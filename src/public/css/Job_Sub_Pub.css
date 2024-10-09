@@ -51,13 +51,17 @@
 }
 
 .job-list-container {
+  display: flex;
+  max-height: 280px;
+  overflow-y: auto;
+  flex-direction: column;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 10px;
   background-color: #f9f9f9;
 }
 
-#toggle-subscribe-form {
+.toggle-button {
   background-color: #007bff;
   color: white;
   border: none;
@@ -67,7 +71,7 @@
   margin-bottom: 10px;
 }
 
-#toggle-subscribe-form:hover {
+.toggle-button:hover {
   background-color: #0056b3;
 }
 /* 職位資訊樣式 */
@@ -106,4 +110,8 @@
 
 .read {
   background-color: #d8d8d8; /* 灰色背景 */
+}
+
+.button-container {
+  float: right;              /* 將按鈕浮動到右側 */
 }
