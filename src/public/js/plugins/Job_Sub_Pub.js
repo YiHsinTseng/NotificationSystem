@@ -19,9 +19,9 @@ const fetchTodayPublishedJobsFromProxy = async (url, subscribedConditionInfo) =>
 };
 
 // 訂閱資料操作
-const fetchSubscribedJobCriteriaFromProxy = async (token, job_plugin_id) => {
+const fetchSubscribedJobCriteriaFromProxy = async ({ token, plugin_id }) => {
   try {
-    const response = await fetch(`api/plugins/${job_plugin_id}/jobSubInfo`, {
+    const response = await fetch(`api/plugins/${plugin_id}/jobSubInfo`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -38,9 +38,9 @@ const fetchSubscribedJobCriteriaFromProxy = async (token, job_plugin_id) => {
   } catch (error) { console.error('獲取訂閱數據時發生錯誤:', error); }
 };
 
-const subscribedJobCriteriaFromProxy = async (token, job_plugin_id, subscriptionData) => {
+const subscribedJobCriteriaFromProxy = async ({ token, plugin_id }, subscriptionData) => {
   try {
-    const response = await fetch(`api/plugins/${job_plugin_id}/routine_sub`, {
+    const response = await fetch(`api/plugins/${plugin_id}/routine_sub`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,9 +60,9 @@ const subscribedJobCriteriaFromProxy = async (token, job_plugin_id, subscription
   }
 };
 
-const fetchSubscribedEntitiesFromProxy = async (token, job_plugin_id) => {
+const fetchSubscribedEntitiesFromProxy = async ({ token, plugin_id }) => {
   try {
-    const response = await fetch(`api/plugins/${job_plugin_id}/subInfo`, {
+    const response = await fetch(`api/plugins/${plugin_id}/getSubEntities`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,11 +81,12 @@ const fetchSubscribedEntitiesFromProxy = async (token, job_plugin_id) => {
   }
 };
 
-const updateSubscribeEntitiesFromProxy = async (token, job_plugin_id, job_ids, company_names, type) => {
+const updateSubscribeEntitiesFromProxy = async ({ token, plugin_id }, job_ids, company_names, type) => {
+  console.log({ token, plugin_id });
   // type 1 單一或批量新增
   // type 2 單一或批量刪除
   try {
-    const response = await fetch(`api/plugins/${job_plugin_id}/instant_sub`, {
+    const response = await fetch(`api/plugins/${plugin_id}/subscriptions'`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -109,7 +110,7 @@ const updateSubscribeEntitiesFromProxy = async (token, job_plugin_id, job_ids, c
     const data = await response.json(); // 解析回應為 JSON
     console.log('訂閱職位成功:', data); // 可以在這裡處理成功訂閱的回應
 
-    await fetchSubscribedEntitiesFromProxy(token, job_plugin_id); // 獲取已訂閱的職位和公司
+    await fetchSubscribedEntitiesFromProxy({ token, plugin_id }); // 獲取已訂閱的職位和公司
   } catch (error) {
     console.error('訂閱職位時發生錯誤:', error);
   }
@@ -194,197 +195,189 @@ const handleFetchError = () => {
   jobListElement.innerHTML = '消息過期或無最新職缺';
 };
 
-// 封裝輸出讓plugin動態讀取(與監聽器有關函式)
-export const initializePlugin = (token, job_plugin_id) => {
-  // 替按鈕添加監聽器
-  const handleJobItemReadStatus = (jobItem, jobId) => {
-    if (isJobRead(jobId)) {
-      jobItem.classList.add('read');
+const handleJobItemReadStatus = (jobItem, jobId) => {
+  if (isJobRead(jobId)) {
+    jobItem.classList.add('read');
+  }
+
+  const jobTitleElement = jobItem.querySelector('.job-title');
+  jobTitleElement.addEventListener('click', () => {
+    markJobAsRead(jobId);
+    jobItem.classList.add('read');
+  });
+};
+
+const createSubscribeButton = (
+  text,
+  subscribedEntity,
+  subscribedEntities,
+  { token, plugin_id },
+  { openJobs, notification },
+) => {
+  const button = document.createElement('button');
+  button.className = 'subscribe-button';
+  const isSubscribed = subscribedEntities.includes(subscribedEntity);
+  button.textContent = isSubscribed ? '已訂閱' : text;
+
+  button.addEventListener('click', async () => {
+    const action = isSubscribed ? 2 : 1; // 1: 訂閱, 2: 取消訂閱
+    switch (text) {
+      case '訂閱職缺':
+        await updateSubscribeEntitiesFromProxy(
+          { token, plugin_id },
+          [subscribedEntity],
+          [],
+          action,
+        ); // 用職缺 ID 訂閱
+        break;
+      case '訂閱公司':
+        await updateSubscribeEntitiesFromProxy(
+          { token, plugin_id },
+          [],
+          [subscribedEntity],
+          action,
+        ); // 用公司名稱 訂閱
+        break;
+      default:
+        console.warn(`未處理的按鈕文本: ${text}`);
+        break;
     }
+    await openJobs(notification);
+  });
 
-    const jobTitleElement = jobItem.querySelector('.job-title');
-    jobTitleElement.addEventListener('click', () => {
-      markJobAsRead(jobId);
-      jobItem.classList.add('read');
-    });
-  };
-  const createSubscribeButton = (
-    text,
-    subscribedEntity,
-    subscribedEntities,
-    token,
-    job_plugin_id,
+  return button;
+};
+
+// 創建內容包含有監聽器的按鈕
+const createJobItem = (
+  job,
+  indexOfItem,
+  { subscribedJobIds, subscribedCompanyNames },
+  { token, plugin_id },
+  { openJobs, notification },
+) => {
+  const jobItem = document.createElement('div');
+  jobItem.className = 'job-item';
+
+  const jobNumber = document.createElement('div');
+  jobNumber.className = 'job-number';
+  jobNumber.textContent = `#${indexOfItem}`;
+
+  const jobTitleElement = document.createElement('a');
+  jobTitleElement.className = 'job-title';
+  jobTitleElement.textContent = job.job_title;
+  jobTitleElement.href = job.job_link;
+  jobTitleElement.target = '_blank';
+
+  const subscribeButtonTitle = createSubscribeButton(
+    '訂閱職缺',
+    job.job_id,
+    subscribedJobIds,
+    { token, plugin_id },
+    { openJobs, notification },
+  );
+
+  const createCompanyElement = (
+    companyName,
+    subscribedCompanyNames,
+    { token, plugin_id },
     notification,
   ) => {
-    const button = document.createElement('button');
-    button.className = 'subscribe-button';
-    const isSubscribed = subscribedEntities.includes(subscribedEntity);
-    button.textContent = isSubscribed ? '已訂閱' : text;
+    const companyElement = document.createElement('div');
+    companyElement.className = 'job-company';
+    companyElement.textContent = companyName;
 
-    button.addEventListener('click', async () => {
-      const action = isSubscribed ? 2 : 1; // 1: 訂閱, 2: 取消訂閱
-      switch (text) {
-        case '訂閱職缺':
-          await updateSubscribeEntitiesFromProxy(
-            token,
-            job_plugin_id,
-            [subscribedEntity],
-            [],
-            action,
-          ); // 用職缺 ID 訂閱
-          break;
-        case '訂閱公司':
-          await updateSubscribeEntitiesFromProxy(
-            token,
-            job_plugin_id,
-            [],
-            [subscribedEntity],
-            action,
-          ); // 用公司名稱 訂閱
-          break;
-        default:
-          console.warn(`未處理的按鈕文本: ${text}`);
-          break;
-      }
-      await openJobs(notification);
-    });
-
-    return button;
-  };
-  // 創建內容包含有監聽器的按鈕
-  const createJobItem = (
-    job,
-    indexOfItem,
-    { subscribedJobIds, subscribedCompanyNames },
-    token,
-    job_plugin_id,
-    notification,
-  ) => {
-    const jobItem = document.createElement('div');
-    jobItem.className = 'job-item';
-
-    const jobNumber = document.createElement('div');
-    jobNumber.className = 'job-number';
-    jobNumber.textContent = `#${indexOfItem}`;
-
-    const jobTitleElement = document.createElement('a');
-    jobTitleElement.className = 'job-title';
-    jobTitleElement.textContent = job.job_title;
-    jobTitleElement.href = job.job_link;
-    jobTitleElement.target = '_blank';
-
-    const subscribeButtonTitle = createSubscribeButton(
-      '訂閱職缺',
-      job.job_id,
-      subscribedJobIds,
-      token,
-      job_plugin_id,
-      notification,
-    );
-
-    const createCompanyElement = (
+    const subscribeButtonCompany = createSubscribeButton(
+      '訂閱公司',
       companyName,
       subscribedCompanyNames,
-      token,
-      job_plugin_id,
-      notification,
-    ) => {
-      const companyElement = document.createElement('div');
-      companyElement.className = 'job-company';
-      companyElement.textContent = companyName;
-
-      const subscribeButtonCompany = createSubscribeButton(
-        '訂閱公司',
-        companyName,
-        subscribedCompanyNames,
-        token,
-        job_plugin_id,
-        notification,
-      );
-
-      companyElement.appendChild(subscribeButtonCompany);
-      return companyElement;
-    };
-
-    const companyElement = createCompanyElement(
-      job.company_name,
-      subscribedCompanyNames,
-      token,
-      job_plugin_id,
-      notification,
+      { token, plugin_id },
+      { openJobs, notification },
     );
 
-    const jobExperienceElement = createJobExperienceElement(job.job_exp);
-    const jobDescriptionElement = createJobDescriptionElement(job.job_desc);
-    const updateDate = createJobUpdateDateElement(job.update_date);
-    const source = createJobSourceElement(job.source);
-    const jobInfoElement = createJobInfoElement(job.job_info);
-
-    const readButton = document.createElement('button');
-    readButton.className = 'read-button';
-    readButton.textContent = '已讀';
-
-    const saveButton = document.createElement('button');
-    saveButton.className = 'save-button';
-    saveButton.textContent = '最愛';
-
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'button-container';
-
-    readButton.addEventListener('click', () => {
-      markJobAsRead(job.job_id);
-      jobItem.classList.add('read');
-    });
-    buttonContainer.appendChild(saveButton);
-    buttonContainer.appendChild(readButton);
-
-    jobItem.append(
-      jobNumber,
-      buttonContainer,
-      jobTitleElement,
-      subscribeButtonTitle,
-      companyElement,
-      jobExperienceElement,
-      jobDescriptionElement,
-      updateDate,
-      source,
-      jobInfoElement,
-    );
-
-    return jobItem;
+    companyElement.appendChild(subscribeButtonCompany);
+    return companyElement;
   };
-  const displayJobList = (
-    jobData,
-    { subscribedJobIds, subscribedCompanyNames },
-    token,
-    job_plugin_id,
+
+  const companyElement = createCompanyElement(
+    job.company_name,
+    subscribedCompanyNames,
+    { token, plugin_id },
     notification,
-  ) => {
-    const jobListElement = document.getElementById('job-list');
-    jobListElement.innerHTML = '';
+  );
 
-    const sortedJobData = jobData.items.sort(
-      (a, b) => new Date(b.update_date) - new Date(a.update_date),
+  const jobExperienceElement = createJobExperienceElement(job.job_exp);
+  const jobDescriptionElement = createJobDescriptionElement(job.job_desc);
+  const updateDate = createJobUpdateDateElement(job.update_date);
+  const source = createJobSourceElement(job.source);
+  const jobInfoElement = createJobInfoElement(job.job_info);
+
+  const readButton = document.createElement('button');
+  readButton.className = 'read-button';
+  readButton.textContent = '已讀';
+
+  const saveButton = document.createElement('button');
+  saveButton.className = 'save-button';
+  saveButton.textContent = '最愛';
+
+  const buttonContainer = document.createElement('div');
+  buttonContainer.className = 'button-container';
+
+  readButton.addEventListener('click', () => {
+    markJobAsRead(job.job_id);
+    jobItem.classList.add('read');
+  });
+  buttonContainer.appendChild(saveButton);
+  buttonContainer.appendChild(readButton);
+
+  jobItem.append(
+    jobNumber,
+    buttonContainer,
+    jobTitleElement,
+    subscribeButtonTitle,
+    companyElement,
+    jobExperienceElement,
+    jobDescriptionElement,
+    updateDate,
+    source,
+    jobInfoElement,
+  );
+
+  return jobItem;
+};
+
+const displayJobList = (
+  jobData,
+  { subscribedJobIds, subscribedCompanyNames },
+  { token, plugin_id },
+  { openJobs, notification },
+) => {
+  const jobListElement = document.getElementById('job-list');// 注意可以考慮抽離（html已有job-list EL）
+  jobListElement.innerHTML = '';
+
+  const sortedJobData = jobData.items.sort(
+    (a, b) => new Date(b.update_date) - new Date(a.update_date),
+  );
+
+  sortedJobData.forEach((job, index) => {
+    const jobItem = createJobItem(
+      job,
+      index + 1,
+      { subscribedJobIds, subscribedCompanyNames },
+      { token, plugin_id },
+      { openJobs, notification },
     );
+    jobListElement.appendChild(jobItem);
+    handleJobItemReadStatus(jobItem, job.job_id);
+  });
 
-    sortedJobData.forEach((job, index) => {
-      const jobItem = createJobItem(
-        job,
-        index + 1,
-        { subscribedJobIds, subscribedCompanyNames },
-        token,
-        job_plugin_id,
-        notification,
-      );
-      jobListElement.appendChild(jobItem);
-      handleJobItemReadStatus(jobItem, job.job_id);
-    });
+  const infoText = document.createElement('div');
+  infoText.className = 'info-text';
+  jobListElement.appendChild(infoText);
+};
 
-    const infoText = document.createElement('div');
-    infoText.className = 'info-text';
-    jobListElement.appendChild(infoText);
-  };
-
+// 封裝輸出讓plugin動態讀取
+export const initializePlugin = ({ token, plugin_id }) => {
   // 開啟已定時推播符合條件之職缺清單
   const openJobs = async (notification) => {
     // 從 localStorage 中提取已訂閱的 job_ids 和 company_names
@@ -399,9 +392,8 @@ export const initializePlugin = (token, job_plugin_id) => {
         displayJobList(
           pubbedJobData,
           { subscribedJobIds, subscribedCompanyNames },
-          token,
-          job_plugin_id,
-          notification,
+          { token, plugin_id },
+          { openJobs, notification },
         );
       } catch (error) {
         handleFetchError();
@@ -417,7 +409,7 @@ export const initializePlugin = (token, job_plugin_id) => {
     const jobListElement = document.getElementById('job-list');
     jobListElement.innerHTML = '';
 
-    const jobItem = createJobItem(job, 1, [], [], token, job_plugin_id, notification);
+    const jobItem = createJobItem(job, 1, [], [], { token, plugin_id }, { openJobs, notification });
     jobListElement.appendChild(jobItem);
     handleJobItemReadStatus(jobItem, job.job_id);
   };
@@ -471,7 +463,7 @@ const getDomElement = () => {
 
 // 用單例避免多次添加監聽器，不然就要有remove機制
 let instance;
-export const setupEventListeners = (token, job_plugin_id) => {
+export const setupEventListeners = ({ token, plugin_id }) => {
   // JOB 訂閱模組
   if (instance) {
     return instance; // 返回已經初始化過的實例，不會有後續處理
@@ -495,7 +487,7 @@ export const setupEventListeners = (token, job_plugin_id) => {
   toggleSubscribeFormButton.addEventListener('click', () => {
     if (subscribeForm.style.display === 'none' || subscribeForm.style.display === '') {
       subscribeForm.style.display = 'block';
-      fetchSubscribedJobCriteriaFromProxy(token, job_plugin_id);
+      fetchSubscribedJobCriteriaFromProxy({ token, plugin_id });
     } else {
       subscribeForm.style.display = 'none';
     }
@@ -535,7 +527,7 @@ export const setupEventListeners = (token, job_plugin_id) => {
     };
 
     try {
-      const data = await subscribedJobCriteriaFromProxy(token, job_plugin_id, subscriptionData);
+      const data = await subscribedJobCriteriaFromProxy({ token, plugin_id }, subscriptionData);
       alert('訂閱成功！');
       console.log(data);
       // 可以在這裡執行其他後續操作，例如更新 UI
@@ -543,9 +535,9 @@ export const setupEventListeners = (token, job_plugin_id) => {
       console.error('訂閱時發生錯誤:', error);
       alert('訂閱失敗，請稍後再試。');
     }
-
-    fetchSubscribedEntitiesFromProxy(token, job_plugin_id);
-    fetchSubscribedJobCriteriaFromProxy(token, job_plugin_id);
+    // 可能可以考量不用每次都fetch
+    fetchSubscribedEntitiesFromProxy({ token, plugin_id });
+    fetchSubscribedJobCriteriaFromProxy({ token, plugin_id });
   });
 
   instance = { pluginSideBarContainer: jobPluginContainer };// TODO 一起匯出還是分開
