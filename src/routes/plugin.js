@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 const controller = require('../controllers/plugin');
+const pluginProxyController = require('../controllers/pluginProxy');
 const { authenticateAdmin } = require('../middlewares/authenticate');
 
 // 添加外掛到系統外掛清單
@@ -24,6 +25,6 @@ router.post('/plugins/:plugin_id', controller.addUserPlugin);
 router.delete('/plugins/:plugin_id', controller.deleteUserPlugin);
 
 // 代理請求的路由
-router.post('/plugins/:plugin_id/:apiType', controller.sendPluginRequest);
+router.post('/plugins/:plugin_id/:action', pluginProxyController.sendPluginProxyRequest);
 
 module.exports = router;
