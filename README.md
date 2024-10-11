@@ -141,7 +141,7 @@ Plugin UI (JSON):
           "sender": "Job_Pub",
           "type": ["job_id_channel", "company_name_channel"]
       },
-      "action": "openJobInfo"
+      "action": "openJobsInfo"
       }
   }
 }

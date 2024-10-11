@@ -441,20 +441,18 @@ export const initializePlugin = ({ token, plugin_id }) => {
   };
 
   // 開啟已即時推播有更新內容之單一職缺或公司名下有更新的所有職缺
-  const openJobInfo = async (notification) => {
+  const openJobsInfo = async (notification) => {
     const job = notification.link.data.data; // 命名可能要改過
-    console.log(job);
-
+    const { subscribedJobIds, subscribedCompanyNames } = getSubscribedEntities();
     const jobListElement = document.getElementById('job-list');
     jobListElement.innerHTML = '';
-
-    const jobItem = createJobItem(job, 1, [], [], { token, plugin_id }, { openJobs, notification });
+    const jobItem = createJobItem(job, 1, { subscribedJobIds, subscribedCompanyNames }, { token, plugin_id }, { openJobs, notification });
     jobListElement.appendChild(jobItem);
     handleJobItemReadStatus(jobItem, job.job_id);
   };
 
   return {
-    openJobInfo,
+    openJobsInfo,
     openJobs,
   };
 };
