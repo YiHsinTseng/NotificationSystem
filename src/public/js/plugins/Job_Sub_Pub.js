@@ -575,9 +575,10 @@ export const setupEventListeners = ({ token, plugin_id }) => {
       alert('訂閱失敗，請稍後再試。');
     }
     // 可能可以考量不用每次都fetch
-    fetchSubscribedEntitiesFromProxy({ token, plugin_id });
     fetchSubscribedJobCriteriaFromProxy({ token, plugin_id });
   });
+
+  fetchSubscribedEntitiesFromProxy({ token, plugin_id });
 
   instance = { pluginSideBarContainer: jobPluginContainer };// TODO 一起匯出還是分開
 

@@ -24,7 +24,6 @@ const sendRequest = async (user_id, plugin_id, action, method, data) => {
 
   const public_id = await User.findPublicIdByUserId(user_id);
 
-  console.log(public_id);
   // TODO 防禦程式設計在放在服務層還是控制層
 
   try {
@@ -47,7 +46,6 @@ const sendRequest = async (user_id, plugin_id, action, method, data) => {
     if (apiConfig.replace.path_params) {
       url = replaceParams(url, apiConfig.replace.path_params, data);
     }
-    console.log(url);
 
     const options = {
       method,
@@ -59,7 +57,6 @@ const sendRequest = async (user_id, plugin_id, action, method, data) => {
 
     if (apiConfig.method.includes(method)) {
       const body = { ...data };
-      console.log(apiConfig.replace.body);
 
       const updatedBody = apiConfig.replace.body
         ? Object.entries(apiConfig.replace.body).reduce((acc, [key, value]) => {
@@ -72,7 +69,6 @@ const sendRequest = async (user_id, plugin_id, action, method, data) => {
       options.data = { ...body, ...updatedBody };
     }
 
-    console.log(options);
     const response = await axios(options);
     return response.data;
   } catch (error) {

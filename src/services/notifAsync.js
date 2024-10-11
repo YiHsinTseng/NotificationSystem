@@ -50,7 +50,7 @@ const addjobNotifications = async (notificationRepository, notif, sender, type) 
     // console.log(user_id);
     if (user_id) {
       const message = `有 ${notif.data.update} 筆更新，共有 ${notif.data.count} 筆工作資料符合結果`;
-      const link = { url: 'http://localhost:4000/api/filterJobsBySub', data: notif.data, authToken };
+      const link = { url: 'http://localhost:4000/api/jobs/published', data: notif.data, authToken };
       await addNotifications(notificationRepository, user_id, message, link, sender, type);
       console.log('success');
       console.log(message);
