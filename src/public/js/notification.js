@@ -107,6 +107,7 @@ export async function setupNotificationEventListeners(token, userPlugins) {
     displayNotifications(notificationListElement, loadMoreButton, notifications, limit);
   }
 
+  // 因為是批量添加與notificationListElement耦合，所以要個別移除有點麻煩
   notificationListElement.addEventListener('click', async (event) => {
     const notificationItem = event.target.closest('.notification-item');
     if (!notificationItem) return;

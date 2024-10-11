@@ -2,6 +2,8 @@ import {
   addPlugin, postPlugin, removePlugin, fetchPlugins, fetchUserPlugins,
 } from './apis.js';
 
+import { setupNotificationEventListeners } from './notification.js';
+
 // UI
 function getDomElement() {
   return {
@@ -49,9 +51,10 @@ async function loadAndInitializeJobPlugin(token, userPlugins) {
 
         // 插件只會載入一次
         const { setupEventListeners, initializePlugin } = PluginModule;
-        const { pluginSideBarContainer } = await setupEventListeners(token, item.plugin_id);// 這裡還是要單例因為容器狀態是非純函數
+        // 這裡還是要單例因為容器狀態是非純函數，沒有removeListener，批量添加容易，但移除麻煩會影響到其他插件
+        const { pluginSideBarContainer } = await setupEventListeners({ token, plugin_id: item.plugin_id });
 
-        const pluginFunctions = await initializePlugin(token, item.plugin_id);
+        const pluginFunctions = await initializePlugin({ token, plugin_id: item.plugin_id });
         item.pluginSideBarContainer = pluginSideBarContainer;
 
         // 根據插件配置調用對應的函數
@@ -165,6 +168,7 @@ export function initializePluginManger(token) {
           await removePlugin(token, plugin.plugin_id);
           plugin.pluginSideBarContainer.style.display = 'none';
           userPlugins = userPlugins.filter((pl) => pl.plugin_id !== plugin.plugin_id);
+          // 沒有remove and loadAndInitializeJobPlugin(token, userPlugins);
           console.log('NOW PG', userPlugins);
           // 刪除成功後更新顯示
           displayPlugins(userPlugins, plugins);
@@ -283,7 +287,7 @@ async function submitPluginForm(token, pluginName, pluginApis, pluginUI) {
   await postPlugin(token, formData);
 }
 
-export async function setupPluginEventListeners(token) {
+export async function setupPluginFormListeners(token) {
   const {
     pluginButton,
     pluginContainer,

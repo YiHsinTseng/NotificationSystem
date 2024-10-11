@@ -55,11 +55,73 @@ Job_Sub_Pub
 Plugin APIs (JSON):
 ```
 {
-"routine_sub":"http://localhost:4000/api/jobs_subscriptions",
-"instant_sub":"http://localhost:4000/api/id_subscriptions",
-"search":"http://localhost:4000/api/filterJobsBySub",
-"subInfo":"http://localhost:4000/api/id_subscriptions",
-"jobSubInfo":"http://localhost:4000/api/jobs_subscriptions"
+    "getSubConditions": {
+        "description": "取得定時訂閱條件",
+        "url": "http://localhost:4000/api/conditions_subscriptions/:user_id",
+        "method": "GET",
+        "replace":{
+            "path_params":	{
+                "user_id":"public_id"
+            }
+        } 
+    },
+    "subConditions": {
+        "description": "定時訂閱條件",
+        "url": "http://localhost:4000/api/conditions_subscriptions/:user_id",
+        "method": "POST",
+        "replace":{
+            "path_params":	{
+                "user_id":"public_id"
+            }
+        } 
+    },
+    "getPubbedJobs": {
+        "description": "取得定時推播後詳細職缺內容",
+        "url": "http://localhost:4000/api/jobs/published",
+        "method": "GET",
+        "replace":{
+            "body":	{
+                "user_id":"public_id"
+            }
+        }
+    },
+    "getSubEntities": {
+            "description": "取得即時訂閱對象",
+        "url": "http://localhost:4000/api/entities_subscriptions/:user_id",
+        "method": "GET",
+        "replace":{
+            "path_params":{
+                "user_id":"public_id"
+            }
+        }
+    },
+    "subbedCompany": {
+        "description": "訂閱或取消訂閱公司",
+        "url": "http://localhost:4000/api/entities_subscriptions/company/:company_name",
+        "method": ["POST","DELETE"],
+        "replace":{
+            "path_params":{
+                "company_name":"body.company_name"
+            },
+            "body":	{
+                "user_id":"public_id"
+            }
+        }
+    },
+    "subbedJob": {
+        "description": "訂閱或取消訂閱職位",
+        "url": "http://localhost:4000/api/entities_subscriptions/job/:job_id",
+        "method": ["POST","DELETE"],
+        "replace":{
+            "path_params":{
+                "job_id":"body.job_id"
+            },
+            "body":	{
+                "user_id":"public_id"
+            }
+
+        }
+    }
 }
 ```
 

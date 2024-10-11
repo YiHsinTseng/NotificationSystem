@@ -1,5 +1,5 @@
 import { setupNotificationEventListeners } from './notification.js';
-import { setupPluginEventListeners, initializePluginManger } from './plugin.js';// 會重名
+import { setupPluginFormListeners, initializePluginManger } from './plugin.js';// 會重名
 
 /*
 1. 載入並初始化主要服務功能：
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
     // Setup event listeners與函數要分開
       const { fetchPluginsAndUserPlugins } = initializePluginManger(token);
-      setupPluginEventListeners(token);
+      setupPluginFormListeners(token);
 
       const userPlugins = await fetchPluginsAndUserPlugins(token);// 認證錯誤要如何處置
 
