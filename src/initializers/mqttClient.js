@@ -3,8 +3,8 @@ const { addjobNotifications, addfastNotifications } = require('../services/notif
 
 const setupMqttClient = (notifService, notificationRepository, io) => {
 // MQTT 伺服器配置
-// const MQTT_BROKER_URL = 'mqtt://localhost';
-  const { MQTT_BROKER_URL } = process.env;
+  const { SERVICE_HOST, MQTT_BROKER_PORT } = process.env;
+  const MQTT_BROKER_URL = `mqtt://${SERVICE_HOST}:${MQTT_BROKER_PORT}`;
   const MQTT_TOPIC = 'notifications';
   const MQTT_JOB = 'job_id_channel';
   const MQTT_COMPANY = 'company_name_channel';

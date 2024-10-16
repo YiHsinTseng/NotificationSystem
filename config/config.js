@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const {
-  API_VERSION, PORT, MONGODB_URI_LOCAL, MONGODB_URI_CLOUD, USE_CLOUD_DB, SESSION_SECRET, WHITE_LIST,
+  API_VERSION, PORT, MONGODB_URI_LOCAL, MONGODB_URI_CLOUD, USE_CLOUD_DB, WHITE_LIST,
 } = process.env;
 
 let MONGODB_URI;
@@ -23,6 +23,5 @@ module.exports = {
   API_VERSION,
   PORT,
   MONGODB_URI,
-  SESSION_SECRET,
   corsOptions,
 };

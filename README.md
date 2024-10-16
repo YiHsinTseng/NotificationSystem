@@ -21,12 +21,16 @@ brew services start mongodb/brew/mongodb-community
 ## 測試環境變數
 
 ```
+WHITE_LIST=
+
 PORT=5050
 MONGODB_URI_LOCAL=mongodb://localhost:27017/yourDatabaseName
-SESSION_SECRET=YOURSECRET
+MONGODB_URI_CLOUD=
 
+SERVICE_HOST=localhost
+SERVICE_PORT=4000
 PASSPORT_SECRET=YOURSECRET
-MQTT_BROKER_URL=mqtt://localhost:1884 #搭配Job_Sub_Pub 本地測試
+MQTT_BROKER_PORT=1884 #搭配Job_Sub_Pub 本地測試
 CRON_SCHEDULE='0 4 * * *'
 ```
 
