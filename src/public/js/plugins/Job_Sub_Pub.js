@@ -385,11 +385,17 @@ const createJobItem = (
   return jobItem;
 };
 
+/**
+*額外渲染上下一頁按鈕，需要傳遞查詢API以及Page資訊
+*/
 const displayJobList = (
+  url,
+  { authToken, data },
   jobData,
   { subscribedJobIds, subscribedCompanyNames },
   { token, plugin_id },
   { openJobs, notification },
+  page = 1,
 ) => {
   const jobListElement = document.getElementById('job-list');// 注意可以考慮抽離（html已有job-list EL）
   jobListElement.innerHTML = '';
@@ -398,10 +404,12 @@ const displayJobList = (
     (a, b) => new Date(b.update_date) - new Date(a.update_date),
   );
 
+  const limit = 50;
+  const modifyIndexs = (page - 1) * limit;
   sortedJobData.forEach((job, index) => {
     const jobItem = createJobItem(
       job,
-      index + 1,
+      index + 1 + modifyIndexs,
       { subscribedJobIds, subscribedCompanyNames },
       { token, plugin_id },
       { openJobs, notification },
@@ -413,6 +421,87 @@ const displayJobList = (
   const infoText = document.createElement('div');
   infoText.className = 'info-text';
   jobListElement.appendChild(infoText);
+
+  renderPaginationControls(
+    jobListElement,
+    url,
+    { authToken, data },
+    jobData,
+    { token, plugin_id },
+    { openJobs, notification },
+  );
+};
+
+/**
+ * 切換頁數並重新載入資料
+ */
+const changePage = async (
+  url,
+  { authToken, data },
+  newPage,
+  { token, plugin_id },
+  { openJobs, notification },
+) => {
+  const currentPage = newPage;
+  const { subscribedJobIds, subscribedCompanyNames } = getSubscribedEntities();
+  try {
+    const jobData = await fetchTodayPublishedJobsFromProxy(
+      url,
+      { authToken, data, page: currentPage },
+    );
+    displayJobList(
+      url,
+      { authToken, data },
+      jobData,
+      { subscribedJobIds, subscribedCompanyNames },
+      { token, plugin_id },
+      { openJobs, notification },
+      currentPage,
+    );
+  } catch (error) {
+    console.error('Failed to fetch job data:', error);
+  }
+};
+
+/**
+ * 渲染分頁按鈕（上一頁/下一頁）
+ */
+const renderPaginationControls = (
+  parentElement,
+  url,
+  { authToken, data },
+  jobData,
+  { token, plugin_id },
+  { openJobs, notification },
+) => {
+  const paginationContainer = document.createElement('div');
+  paginationContainer.className = 'pagination-controls';
+
+  const prevButton = document.createElement('button');
+  prevButton.textContent = '上一頁';
+  prevButton.disabled = jobData.currentPage === 1;
+  prevButton.addEventListener('click', () => changePage(
+    url,
+    { authToken, data },
+    jobData.currentPage - 1,
+    { token, plugin_id },
+    { openJobs, notification },
+  ));
+
+  const nextButton = document.createElement('button');
+  nextButton.textContent = '下一頁';
+  nextButton.disabled = jobData.currentPage === jobData.totalPages;
+  nextButton.addEventListener('click', () => changePage(
+    url,
+    { authToken, data },
+    jobData.currentPage + 1,
+    { token, plugin_id },
+    { openJobs, notification },
+  ));
+
+  if (jobData.currentPage > 1) paginationContainer.appendChild(prevButton);
+  if (jobData.currentPage < jobData.updateItemsPages) paginationContainer.appendChild(nextButton);
+  parentElement.appendChild(paginationContainer);
 };
 
 // 封裝輸出讓plugin動態讀取
@@ -429,6 +518,8 @@ export const initializePlugin = ({ token, plugin_id }) => {
       try {
         const pubbedJobData = await fetchTodayPublishedJobsFromProxy(url, { authToken, data });
         displayJobList(
+          url,
+          { authToken, data },
           pubbedJobData,
           { subscribedJobIds, subscribedCompanyNames },
           { token, plugin_id },
