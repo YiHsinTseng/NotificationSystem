@@ -37,7 +37,8 @@ CRON_SCHEDULE='0 4 * * *'
 ## 啟動應用
 
 ```
-node server.js
+npm install
+npm run start
 ```
 
 ## 登入帳密(管理員)
