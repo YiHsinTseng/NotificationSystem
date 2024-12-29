@@ -554,10 +554,11 @@ const createPluginHtml = () => `
       <button class="toggle-button" id="toggle-subscribe-form">訂閱職缺條件</button>
       <div class="subscribe-form" id="condition-subscribe-form" style="display: none;">
         <h3>篩選條件</h3>
+        <p><small> HINT: 以 , 或 空白鍵 分隔文字。<br>全空白預設無限制。<br>支持模糊匹配不區分大小寫</small></p>
         <label for="industries">行業:</label> 
         <input type="text" id="industries" placeholder="輸入行業名稱">
         <br>
-        <label for="job_info">職位資訊:</label>
+        <label for="job_info">職位資訊（Tech Stack）:</label>
         <input type="text" id="job_info" placeholder="輸入職位關鍵詞，用逗號或空格分隔" size="50">
         <br>
         <h3>排除條件</h3>
