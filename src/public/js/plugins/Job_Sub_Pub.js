@@ -355,9 +355,9 @@ const createJobItem = (
   readButton.className = 'read-button';
   readButton.textContent = '已讀';
 
-  const saveButton = document.createElement('button');
-  saveButton.className = 'save-button';
-  saveButton.textContent = '最愛';
+  // const saveButton = document.createElement('button');
+  // saveButton.className = 'save-button';
+  // saveButton.textContent = '最愛';
 
   const buttonContainer = document.createElement('div');
   buttonContainer.className = 'button-container';
@@ -366,7 +366,7 @@ const createJobItem = (
     markJobAsRead(job.job_id);
     jobItem.classList.add('read');
   });
-  buttonContainer.appendChild(saveButton);
+  // buttonContainer.appendChild(saveButton);
   buttonContainer.appendChild(readButton);
 
   jobItem.append(
@@ -554,7 +554,7 @@ const createPluginHtml = () => `
       <button class="toggle-button" id="toggle-subscribe-form">訂閱職缺條件</button>
       <div class="subscribe-form" id="condition-subscribe-form" style="display: none;">
         <h3>篩選條件</h3>
-..        <p><small> HINT: 以 , 或 空白鍵 分隔文字。<br>全空白預設無限制。<br>支持模糊匹配不區分大小寫</small></p>
+        <p><small> HINT: 以 , 或 空白鍵 分隔文字。<br>全空白預設無限制。<br>支持模糊匹配不區分大小寫</small></p>
         <label for="industries">行業:</label> 
         <input type="text" id="industries" placeholder="輸入行業名稱">
         <br>
@@ -566,7 +566,6 @@ const createPluginHtml = () => `
         <input type="text" id="exclude_job_title" placeholder="輸入職位關鍵詞，用逗號或空格分隔" size="50">
         <button id="condition-subscribe-button">訂閱</button>
       </div>
-      <button class="toggle-button" id="toggle-fav-jobs">收藏職缺資料</button>
       <button class="toggle-button" id="toggle-job-list">符合的職缺資料</button>
       <div class="job-list-container" id="job-list-container">
         <div id="job-list"></div>
