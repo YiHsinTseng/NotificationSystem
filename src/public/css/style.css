@@ -8,15 +8,15 @@ body {
 }
 .notification-container {
   width: 300px;
-  flex: 1; /* 讓通知容器彈性地佔用剩餘空間 */
+  flex: 2; /* 讓通知容器彈性地佔用剩餘空間 */
   margin-top: 25px;
   padding: 10px;
 }
 .side-bar-container {
   width: 600px;
-  flex: 1; /* 讓職位資訊容器佔用更多空間 */
-  padding: 10px;
-  margin-left: 15px;
+  flex: 3; /* 讓職位資訊容器佔用更多空間 */
+  /* padding: 10px; */
+  /* margin-left: 15px; */
 }
 .notification-count {
   font-size: 24px;

@@ -215,7 +215,7 @@ const createJobSourceElement = (source) => {
 const createJobInfoElement = (info) => {
   const infoElement = document.createElement('div');
   infoElement.className = 'job-info';
-  infoElement.textContent = `職位資訊: ${info}`;
+  infoElement.textContent = `職位資訊: ${info.join(', ')}`;
   return infoElement;
 };
 
@@ -575,6 +575,7 @@ const createPluginHtml = () => `
 const getDomElement = () => {
   const sideBarContainer = document.getElementById('side-bar-container');
   sideBarContainer.innerHTML += createPluginHtml();
+  sideBarContainer.style.maxWidth = `${window.innerWidth}px`;
 
   return {
     jobPluginContainer: document.getElementById('job-plugin-container'),

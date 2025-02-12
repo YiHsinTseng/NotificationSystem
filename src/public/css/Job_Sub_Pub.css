@@ -106,6 +106,9 @@
 .job-date, .job-source, .job-info {
   font-size: 12px;
   color: #888;
+  white-space: normal;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .read {
