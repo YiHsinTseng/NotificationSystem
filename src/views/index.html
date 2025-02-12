@@ -16,6 +16,7 @@
         <button class="refresh-button" id="refresh-button">查看通知</button>
         <button class="plugin-button" id="plugin-button">插件管理</button>
         <button class="logout-button" id="logout-button">登出</button> <!-- 新增登出按鈕 -->
+        <button class="publish-button" id="publish-button">推送通知(測試)</button>
         <div class="notification-list-container" id="notification-list-container">
             <div class="notification-list" id="notification-list"></div>
             <button class="load-more-button" id="load-more-button">查看更多</button>
@@ -53,5 +54,30 @@
     </div>
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script type="module" src="./js/main.js"></script>
+    <script>
+        document.getElementById('publish-button').addEventListener('click', function() {
+          fetch('https://spare-berlin-lions-honolulu.trycloudflare.com/api/trigger-push', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: '12345', // 假設傳送的用戶ID
+            }),
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('請求失敗');
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('請求成功:', data);
+          })
+          .catch(error => {
+            console.error('錯誤:', error);
+          });
+        });
+      </script>
 </body>
 </html>
