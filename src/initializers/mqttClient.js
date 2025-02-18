@@ -47,41 +47,45 @@ const setupMqttClient = (notifService, notificationRepository, io) => {
 
   // 處理接收到的消息，就生成簡單消息並更新通知數量
   mqttClient.on('message', async (topic, message) => {
-    if (topic === MQTT_TOPIC) {
-      // console.log(`Received message on topic '${MQTT_TOPIC}':`, message.toString());
-      const messageObject = JSON.parse(message.toString());
-      const sender = 'Job_Pub';
-      const type = 'routine';
-      const user_id = await addjobNotifications(notificationRepository, messageObject, sender, type);
-      if (user_id) {
-        const notification = await notifService.getNotifications(notificationRepository, user_id);
-        io.emit('notificationUpdate', notification.count);
-        console.log(notification.count);
+    try{
+      if (topic === MQTT_TOPIC) {
+        // console.log(`Received message on topic '${MQTT_TOPIC}':`, message.toString());
+        const messageObject = JSON.parse(message.toString());
+        const sender = 'Job_Pub';
+        const type = 'routine';
+        const user_id = await addjobNotifications(notificationRepository, messageObject, sender, type);
+        if (user_id) {
+          const notification = await notifService.getNotifications(notificationRepository, user_id);
+          io.emit('notificationUpdate', notification.count);
+          console.log(notification.count);
+        }
       }
-    }
-    if (topic === MQTT_JOB) {
-      // console.log(`Received message on topic '${MQTT_JOB}':`, message.toString());
-      const messageObject = JSON.parse(message.toString());
-      const sender = 'Job_Pub';// plugin_name?
-      const type = MQTT_JOB;// api種類
-      const user_id = await addfastNotifications(notificationRepository, messageObject, sender, type);
-      if (user_id) {
-        const notification = await notifService.getNotifications(notificationRepository, user_id);
-        io.emit('notificationUpdate', notification.count);
-        console.log(notification.count);
+      if (topic === MQTT_JOB) {
+        // console.log(`Received message on topic '${MQTT_JOB}':`, message.toString());
+        const messageObject = JSON.parse(message.toString());
+        const sender = 'Job_Pub';// plugin_name?
+        const type = MQTT_JOB;// api種類
+        const user_id = await addfastNotifications(notificationRepository, messageObject, sender, type);
+        if (user_id) {
+          const notification = await notifService.getNotifications(notificationRepository, user_id);
+          io.emit('notificationUpdate', notification.count);
+          console.log(notification.count);
+        }
       }
-    }
-    if (topic === MQTT_COMPANY) {
-      // console.log(`Received message on topic '${MQTT_COMPANY}':`, message.toString());
-      const messageObject = JSON.parse(message.toString());
-      const sender = 'Job_Pub';
-      const type = MQTT_COMPANY;
-      const user_id = await addfastNotifications(notificationRepository, messageObject, sender, type);
-      if (user_id) {
-        const notification = await notifService.getNotifications(notificationRepository, user_id);
-        io.emit('notificationUpdate', notification.count);
-        console.log(notification.count);
+      if (topic === MQTT_COMPANY) {
+        // console.log(`Received message on topic '${MQTT_COMPANY}':`, message.toString());
+        const messageObject = JSON.parse(message.toString());
+        const sender = 'Job_Pub';
+        const type = MQTT_COMPANY;
+        const user_id = await addfastNotifications(notificationRepository, messageObject, sender, type);
+        if (user_id) {
+          const notification = await notifService.getNotifications(notificationRepository, user_id);
+          io.emit('notificationUpdate', notification.count);
+          console.log(notification.count);
+        }
       }
+    }catch(e){
+      console.log(e)
     }
   });
 };
