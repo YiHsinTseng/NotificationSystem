@@ -91,6 +91,30 @@ const fetchSubscribedEntitiesFromProxy = async ({ token, plugin_id }) => {
   }
 };
 
+const fetchSubscribedJobsFromProxy= async({ token, plugin_id})=>{
+  try {
+    const response = await fetch(`api/plugins/${plugin_id}/getSubJobs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        method: 'GET',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json(); // 解析回應為 JSON
+    return result
+  } catch (error) {
+    console.error('顯示時發生錯誤:', error);
+  }
+}
+
 const updateSubscribeJobFromProxy = async ({ token, plugin_id }, jobId, method) => {
   try {
     const response = await fetch(`api/plugins/${plugin_id}/subbedJob`, {
@@ -432,6 +456,47 @@ const displayJobList = (
   );
 };
 
+//借用displayJobList 
+const displayFavJobList = (
+  jobData,
+  { subscribedJobIds, subscribedCompanyNames },
+  { token, plugin_id },
+  { openFavJobs},
+) => {
+  const FavJobListElement = document.getElementById('fav-job-list');// 注意可以考慮抽離（html已有job-list EL）
+  FavJobListElement.innerHTML = '';
+
+  const sortedJobData =  jobData.data.sort(
+    (a, b) => new Date(b.update_date) - new Date(a.update_date),
+  );
+
+  sortedJobData.forEach((job, index) => {
+  //共用 createJobItem 函式
+    const jobItem = createJobItem (
+      job,
+      index + 1,
+      { subscribedJobIds, subscribedCompanyNames },
+      { token, plugin_id },
+      { openJobs: openFavJobs, notification: null},
+    );
+    FavJobListElement.appendChild(jobItem);
+    handleJobItemReadStatus(jobItem, job.job_id);
+  });
+
+  const infoText = document.createElement('div');
+  infoText.className = 'info-text';
+  FavJobListElement.appendChild(infoText);
+
+  // renderPaginationControls(
+  //   jobListElement,
+  //   url,
+  //   { authToken},
+  //   jobData,
+  //   { token, plugin_id },
+  //   { openJobs},
+  // );
+};
+
 /**
  * 切換頁數並重新載入資料
  */
@@ -530,6 +595,21 @@ export const initializePlugin = ({ token, plugin_id }) => {
       }
     }
   };
+  const openFavJobs = async () => {
+    const { subscribedJobIds, subscribedCompanyNames } = getSubscribedEntities();
+    // try {
+      const subbedJobData = await fetchSubscribedJobsFromProxy({ token, plugin_id });
+      console.log(subbedJobData,0)
+      displayFavJobList(
+        subbedJobData,
+        { subscribedJobIds, subscribedCompanyNames },
+        { token, plugin_id },
+        { openFavJobs},
+      );
+    // } catch (error) {
+    //   handleFetchError();
+    // }
+  }
 
   // 開啟已即時推播有更新內容之單一職缺或公司名下有更新的所有職缺
   const openJobsInfo = async (notification) => {
@@ -542,9 +622,13 @@ export const initializePlugin = ({ token, plugin_id }) => {
     handleJobItemReadStatus(jobItem, job.job_id);
   };
 
+  //預設直接執行
+  openFavJobs();
+
   return {
     openJobsInfo,
     openJobs,
+    openFavJobs
   };
 };
 
@@ -566,6 +650,10 @@ const createPluginHtml = () => `
         <input type="text" id="exclude_job_title" placeholder="輸入職位關鍵詞，用逗號或空格分隔" size="50">
         <button id="condition-subscribe-button">訂閱</button>
       </div>
+      <button class="toggle-button" id="toggle-fav-job-list">收藏職缺資料</button>
+      <div class="job-list-container" id="fav-job-list-container">
+        <div id="fav-job-list"></div>
+      </div>
       <button class="toggle-button" id="toggle-job-list">符合的職缺資料</button>
       <div class="job-list-container" id="job-list-container">
         <div id="job-list"></div>
@@ -581,7 +669,9 @@ const getDomElement = () => {
     jobPluginContainer: document.getElementById('job-plugin-container'),
     toggleSubscribeFormButton: document.getElementById('toggle-subscribe-form'),
     subscribeForm: document.getElementById('condition-subscribe-form'),
+    toggleFavJobListButton: document.getElementById('toggle-fav-job-list'),
     toggleJobListButton: document.getElementById('toggle-job-list'),
+    favJobListContainer: document.getElementById('fav-job-list-container'),
     jobListContainer: document.getElementById('job-list-container'),
     conditionSubscribeButton: document.getElementById('condition-subscribe-button'),
     industriesInput: document.getElementById('industries'),
@@ -601,6 +691,8 @@ export const setupEventListeners = ({ token, plugin_id }) => {
     jobPluginContainer,
     toggleSubscribeFormButton,
     subscribeForm,
+    toggleFavJobListButton,
+    favJobListContainer,
     toggleJobListButton,
     jobListContainer,
     conditionSubscribeButton,
@@ -611,6 +703,7 @@ export const setupEventListeners = ({ token, plugin_id }) => {
 
   subscribeForm.style.display = 'none';
 
+  favJobListContainer.style.display = 'none';
   jobListContainer.style.display = 'block';
 
   toggleSubscribeFormButton.addEventListener('click', () => {
@@ -619,6 +712,15 @@ export const setupEventListeners = ({ token, plugin_id }) => {
       fetchSubscribedJobCriteriaFromProxy({ token, plugin_id });
     } else {
       subscribeForm.style.display = 'none';
+    }
+  });
+  toggleFavJobListButton.addEventListener('click', async() => {
+    if (favJobListContainer.style.display === 'none' || favJobListContainer.style.display === '') {
+      favJobListContainer.style.display = 'block';
+      toggleFavJobListButton.textContent = '收藏的職缺資料';
+    } else {
+      favJobListContainer.style.display = 'none';
+      toggleFavJobListButton.textContent = '收藏的職缺資料(隱藏)';
     }
   });
 
