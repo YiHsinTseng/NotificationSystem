@@ -28,25 +28,34 @@ const sendRequest = async (user_id, plugin_id, action, method, data) => {
 
   try {
     let { url } = apiConfig;
-    const replaceParams = (apiUrl, params, requestBody) => Object.entries(params).reduce((acc, [param, value]) => {
-      let replaceValue;
+   
+    /* 替換URL中的機密資訊 */ 
+
+    // 以params中的key為單位進行迭代替換參數(將目標API的params以body或特定值進行替換)
+    const getReplaceValue = (requestBody,value) => {
       if (requestBody && value.startsWith('body.')) {
         const bodyKey = value.split('.')[1];
-        replaceValue = requestBody[bodyKey];
+        return requestBody[bodyKey]; 
       }
       if (value === 'public_id') {
-        replaceValue = public_id;
+        return public_id;
       }
+      return undefined;
+    };
+    
+    const replaceParams = (apiUrl,requestBody, params) => Object.entries(params).reduce((acc, [param, value]) => {
+      const replaceValue = getReplaceValue( requestBody,value);
       if (replaceValue !== undefined) {
         return acc.replace(`:${param}`, replaceValue);
       }
       return acc;
-    }, apiUrl);
-
+    }, apiUrl);//初始值
+  
     if (apiConfig.replace.path_params) {
-      url = replaceParams(url, apiConfig.replace.path_params, data);
+      url = replaceParams(url, data, apiConfig.replace.path_params);
     }
 
+    //基本傳輸參數設定(不包含body)
     const options = {
       method,
       url,
@@ -55,9 +64,9 @@ const sendRequest = async (user_id, plugin_id, action, method, data) => {
       },
     };
 
+    //專門替換body中的user_id
     if (apiConfig.method.includes(method)) {
       const body = { ...data };
-
       const updatedBody = apiConfig.replace.body
         ? Object.entries(apiConfig.replace.body).reduce((acc, [key, value]) => {
           // 如果 value 是 public_id，使用 public_id；否則使用 data[value]
@@ -65,10 +74,10 @@ const sendRequest = async (user_id, plugin_id, action, method, data) => {
           return acc;
         }, { user_id: public_id })
         : { user_id: public_id };
-
       options.data = { ...body, ...updatedBody };
     }
 
+    console.log(options)
     const response = await axios(options);
     return response.data;
   } catch (error) {

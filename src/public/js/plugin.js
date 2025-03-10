@@ -59,10 +59,12 @@ async function loadAndInitializeJobPlugin(token, userPlugins) {
 
         // 根據插件配置調用對應的函數
         const actions = item.ui_event_handler.sidebar;
-
+        console.log(actions)
+        console.log(pluginFunctions)
         // 使用動態映射來設置函數
         Object.keys(actions).forEach((actionKey) => {
           const actionConfig = actions[actionKey];
+          console.log(actionConfig)
           if (pluginFunctions[actionKey] && actionConfig.action === actionKey) {
             actionConfig.func = pluginFunctions[actionKey];
           }
@@ -131,6 +133,7 @@ export function initializePluginManger(token) {
   // TODO 這裡可能是問題點，因為必須初始化
   let plugins = [];
   let userPlugins = [];
+  
 
   function displayPlugins(userPlugins, plugins) {
     // 如果 userPlugins 或 plugins 未定義，給它們賦一個默認值

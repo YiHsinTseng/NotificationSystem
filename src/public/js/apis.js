@@ -56,7 +56,10 @@ export async function fetchPlugins(token) {
   });
   const data = await response.json();
   if (!data.success) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    //錯誤狀態要記得傳遞
+    const error = new Error(`HTTP error! status: ${response.status}`);
+    error.response = response;
+    throw error;
   }
 
   return data;
@@ -73,7 +76,9 @@ export async function fetchUserPlugins(token) {
 
   const data = await response.json();
   if (!data.success) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const error = new Error(`HTTP error! status: ${response.status}`);
+    error.response = response;
+    throw error;
   }
 
   return data;
