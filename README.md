@@ -62,69 +62,108 @@ Plugin APIs (JSON):
 {
     "getSubConditions": {
         "description": "取得定時訂閱條件",
-        "url": "http://localhost:4000/api/conditions_subscriptions/:user_id",
+        "url": "http://localhost:4000/api/users/:user_id/conditions_subscriptions",
         "method": "GET",
-        "replace":{
-            "path_params":	{
-                "user_id":"public_id"
+        "replace": {
+            "path_params":  {
+                "user_id": "public_id"
             }
-        } 
+        }
     },
     "subConditions": {
         "description": "定時訂閱條件",
-        "url": "http://localhost:4000/api/conditions_subscriptions/:user_id",
+        "url": "http://localhost:4000/api/users/:user_id/conditions_subscriptions",
         "method": "POST",
-        "replace":{
-            "path_params":	{
-                "user_id":"public_id"
+        "replace": {
+            "path_params": {
+                "user_id": "public_id"
             }
-        } 
+        }
     },
     "getPubbedJobs": {
         "description": "取得定時推播後詳細職缺內容",
         "url": "http://localhost:4000/api/jobs/published",
         "method": "GET",
-        "replace":{
-            "body":	{
-                "user_id":"public_id"
+        "replace": {}
+    },
+    "getSubEntities": {
+        "description": "取得即時訂閱對象",
+        "url": "http://localhost:4000/api/users/:user_id/entities_subscriptions",
+        "method": "GET",
+        "replace": {
+            "path_params": {
+                "user_id": "public_id"
             }
         }
     },
-    "getSubEntities": {
-            "description": "取得即時訂閱對象",
-        "url": "http://localhost:4000/api/entities_subscriptions/:user_id",
+    "getSubJobs": {
+        "description": "取得即時訂閱職位/new ",
+        "url": "http://localhost:4000/api/users/:user_id/entities_subscriptions/job",
         "method": "GET",
-        "replace":{
-            "path_params":{
-                "user_id":"public_id"
+        "replace": {
+            "path_params": {
+                "user_id": "public_id"
             }
         }
     },
     "subbedCompany": {
         "description": "訂閱或取消訂閱公司",
-        "url": "http://localhost:4000/api/entities_subscriptions/company/:company_name",
+        "url": "http://localhost:4000/api/users/:user_id/entities_subscriptions/company/:company_name",
         "method": ["POST","DELETE"],
-        "replace":{
-            "path_params":{
-                "company_name":"body.company_name"
-            },
-            "body":	{
-                "user_id":"public_id"
+        "replace": {
+            "path_params": {
+                "user_id": "public_id",
+                "company_name": "body.company_name"
             }
         }
     },
     "subbedJob": {
         "description": "訂閱或取消訂閱職位",
-        "url": "http://localhost:4000/api/entities_subscriptions/job/:job_id",
-        "method": ["POST","DELETE"],
-        "replace":{
-            "path_params":{
-                "job_id":"body.job_id"
-            },
-            "body":	{
-                "user_id":"public_id"
+        "url": "http://localhost:4000/api/users/:user_id/entities_subscriptions/job/:job_id",
+        "method": [
+        "POST",
+        "DELETE"
+        ],
+        "replace": {
+            "path_params": {
+                "user_id": "public_id",
+                "job_id": "body.job_id"
             }
-
+        }
+    },
+    "upsertJobIdTags": {
+        "description": "添加自訂職缺標籤",
+        "url": "http://localhost:4000/api/users/:user_id/fav/:jobId/job-tag",
+        "method": "POST",
+        "replace": {
+            "path_params": {
+                "user_id": "public_id",
+                "jobId": "body.jobId"
+            }
+        }
+    },
+    "fetchJobIdTags": {
+        "description": "獲取特定職缺的自訂標籤",
+        "url": "http://localhost:4000/api/users/:user_id/fav/:jobId/job-tag",
+        "method": "GET",
+        "replace": {
+            "path_params": {
+                "jobId": "body.jobId",
+                "user_id": "public_id"
+            }
+        }
+    },
+    "filterJobsByTags": {
+        "description": "以職缺標籤篩選訂閱喜愛職缺",
+        "url": "http://localhost:4000/api/users/:user_id/fav",
+        "method": "POST",
+        "query": [
+            "tagNames"
+            ],
+        "replace": {
+            "path_params": {
+                "user_id": "public_id"
+            }
         }
     }
 }
