@@ -167,6 +167,9 @@ const fetchTodayPublishedJobsFromProxy = async (url, subscribedConditionInfo) =>
     body: JSON.stringify(subscribedConditionInfo),
   });
 
+  // 記憶頁面避免跳轉
+  MemoLastJobPage=subscribedConditionInfo.page
+
   const data = await response.json();
   if (!data.result || data.result.items.length === 0) {
     throw new Error('no data');
@@ -807,14 +810,17 @@ let currentNotification = null;
 let currentInfoNotification = null;
 //因為點擊展開欄位會引用initializePlugin，就會init currentFunction = null，所以最好放到全局
 
+// 用於點擊訂閱與取消訂閱時刷新JobList維持在先前頁面
+let MemoLastJobPage=1
+
 export const initializePlugin = async({ token, plugin_id }) => {
 
 
   const refreshAllJobLists = async () => {
     console.log("currentFunction:",currentFunction)
     if (currentFunction == "openJobs"){
-    await openFavJobs();
-    await openJobs(currentNotification); 
+      await openFavJobs();
+      await openJobs(currentNotification,MemoLastJobPage); 
     }
     if (currentFunction == "openJobsInfo"){
     await openFavJobs();
@@ -846,26 +852,29 @@ export const initializePlugin = async({ token, plugin_id }) => {
     // }
   }
 
-  // 開啟已定時推播符合條件之職缺清單
-  const openJobs = async (notification) => {
+  // 開啟已定時推播符合條件之職缺清單(指定分頁)
+  const openJobs = async (notification,MemoLastJobPage=1) => {
     // 從 localStorage 中提取已訂閱的 job_ids 和 company_names
     currentFunction = "openJobs";  // 用來記錄當前觸發的函式名稱
     currentNotification = notification; // 儲存當前 notification
     const { subscribedJobIds, subscribedCompanyNames } = getSubscribedEntities();
+    console.log(notification.link)
 
     if (notification.link?.url) {
       const { url, data = {}, authToken } = notification.link;
-      console.log('查詢職缺條件', data);
+      const page = MemoLastJobPage
 
       try {
-        const pubbedJobData = await fetchTodayPublishedJobsFromProxy(url, { authToken, data });
+        // 給定分頁資訊爬取資料並渲染
+        const pubbedJobData = await fetchTodayPublishedJobsFromProxy(url, { authToken, data, page });
         displayJobList(
           url,
-          { authToken, data },
+          { authToken, data, page },
           pubbedJobData,
           { subscribedJobIds, subscribedCompanyNames },
           { token, plugin_id },
-          refreshAllJobLists
+          refreshAllJobLists,
+          page
         );
       } catch (error) {
         handleFetchError();
