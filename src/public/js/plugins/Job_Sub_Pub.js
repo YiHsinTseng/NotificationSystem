@@ -580,6 +580,7 @@ const createJobItem = (
       const newtagList=data.data
       const newtag=newtagList.join(', ');
       jobTagsElement.textContent=`自訂標籤: ${newtag}`
+      refreshAllJobLists()
     }
   });
 
